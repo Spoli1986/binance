@@ -12,7 +12,6 @@ import {
 	FuturesPosition,
 	numberInString,
 } from "binance";
-import { createHash, createHmac } from "crypto";
 import { useEffect, useState } from "react";
 import axios from "axios";
 import io from "socket.io-client";
@@ -50,7 +49,6 @@ let socket: any;
 type MarkPriceType = Array<SymbolPriceType>;
 const ORDER_DATA: OrderResult[] = [];
 export default function Home() {
-	// const [wsUrl, setWsURl] = useState();
 	const [error, setError] = useState();
 	const [balance, setBalance] = useState<Balances>(INITIAL_DATA);
 	const [openorder, setOpenOrder] = useState(ORDER_DATA);
@@ -112,11 +110,6 @@ export default function Home() {
 		const response = await axios.get("/api/socketio");
 		// socket = io();
 	};
-	const timestamp = new Date().getTime();
-	const queried_timestamp = "timestamp=" + timestamp;
-	let signature = createHmac("sha256", API_SECRET as string)
-		.update(queried_timestamp)
-		.digest("hex");
 
 	const makeOrder = async (e: any) => {
 		e.preventDefault();
