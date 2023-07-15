@@ -66,10 +66,10 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 
 			const getBalance = async (assetSymbol: string) => {
 				const allAssetBalances = await client.getBalance();
-				const [positionAssetBalance] = allAssetBalances.filter(
+				const positionAssetBalance = allAssetBalances.filter(
 					(asset) => asset.asset === assetSymbol,
 				);
-				return positionAssetBalance.availableBalance;
+				return positionAssetBalance[0].availableBalance;
 			};
 			const wsBinance = new WebsocketClient({
 				api_key: API_KEY,
