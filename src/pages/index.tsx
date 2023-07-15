@@ -14,7 +14,6 @@ import {
 } from "binance";
 import { useEffect, useState } from "react";
 import axios from "axios";
-import io from "socket.io-client";
 
 const inter = Inter({ subsets: ["latin"] });
 type Balances = {
@@ -44,8 +43,6 @@ type SymbolPriceType = {
 	s: string;
 };
 
-let socket: any;
-
 type MarkPriceType = Array<SymbolPriceType>;
 const ORDER_DATA: OrderResult[] = [];
 export default function Home() {
@@ -59,7 +56,6 @@ export default function Home() {
 	const [quantity, setQuantity] = useState<number>(0);
 	const API_KEY = process.env.NEXT_PUBLIC_BINANCE_KEY;
 	const API_SECRET = process.env.NEXT_PUBLIC_BINANCE_SECRET;
-	let wsKey: string = "usdm_ticker__";
 	const [markPrice, setMarkPrice] = useState<SymbolPriceType[]>([]);
 	const [selectedOrders, setSelectedOrders] = useState<number[]>([]);
 	const [positions, setPositions] = useState<FuturesPosition[]>([]);
@@ -107,8 +103,7 @@ export default function Home() {
 		api_secret: API_SECRET,
 	});
 	const startPriceSocket = async () => {
-		const response = await axios.get("/api/socketio");
-		// socket = io();
+		const response = await axios.get("/api/binancews");
 	};
 
 	const makeOrder = async (e: any) => {
@@ -173,30 +168,6 @@ export default function Home() {
 		takeProfitOrders();
 		startPriceSocket();
 	}, []);
-	// console.log(parseFloat(balance.busdBalance[0].availableBalance as string));
-
-	// client
-	// 	.get24hrChangeStatistics()
-	// 	.then((result) => {
-	// 		console.log("getBalance result: ", result);
-	// 	})
-	// 	.catch((err) => {
-	// 		console.error("getBalance error: ", err);
-	// 	});
-
-	// let currentPrice: number = 0
-	// let entryPrice: number = 0
-	// let newEntryPrice: number = 0
-	// let leverage: number = 20
-	// let step: number= 0.25
-	// let steps: number[]
-	// let initMargin: number = 100
-	// let addMargin:number = 100
-	// let newMargin: number;
-	// let buyPrice: number = 0
-	// let sellPrice: number = 0
-
-	// newMargin = initMargin + addMargin
 
 	return (
 		<div className="flex flex-col items-center justify-center w-screen">
