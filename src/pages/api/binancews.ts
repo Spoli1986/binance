@@ -2,7 +2,9 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import { ResponseFuncs } from "../../../utils/types";
 import {
 	DefaultLogger,
+	FuturesAccountBalance,
 	FuturesOrderType,
+	FuturesPosition,
 	OrderSide,
 	USDMClient,
 	WebsocketClient,
@@ -47,15 +49,22 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 			});
 
 			const getPositions = async () => {
-				const positions = await client.getPositions().then((result) => {
-					return result.filter((val) => val.entryPrice !== "0.0");
-				});
+				const positions = await client
+					.getPositions()
+					.then((result) => {
+						return result.filter((val) => val.entryPrice !== "0.0");
+					})
+					.catch((error) => error);
 				return positions;
 			};
 
 			const getPosition = async (symbol: string) => {
-				const allPositions = await getPositions().then((res) => res);
-				const onePosition = allPositions.filter((pos) => pos.symbol === symbol);
+				const allPositions = await getPositions()
+					.then((res) => res)
+					.catch((err) => err);
+				const onePosition = allPositions.filter(
+					(pos: FuturesPosition) => pos.symbol === symbol,
+				);
 				return onePosition[0];
 			};
 
@@ -65,9 +74,9 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 			};
 
 			const getBalance = async (assetSymbol: string) => {
-				const allAssetBalances = await client.getBalance();
+				const allAssetBalances = await client.getBalance().catch((error) => error);
 				const positionAssetBalance = allAssetBalances.filter(
-					(asset) => asset.asset === assetSymbol,
+					(asset: FuturesAccountBalance) => asset.asset === assetSymbol,
 				);
 				return positionAssetBalance[0].availableBalance;
 			};
