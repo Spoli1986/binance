@@ -103,12 +103,14 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 							const takeProfitSide: OrderSide = posAmount < 0 ? "BUY" : "SELL";
 							const takeProfitPrice: number =
 								posAmount < 0
-									? -(50 / Number(position.leverage) / 100) + entryPrice
-									: 50 / Number(position.leverage) / 100 + entryPrice;
+									? entryPrice - (50 / Number(position.leverage) / 100) * entryPrice
+									: entryPrice + 50 / Number(position.leverage) / 100 + entryPrice;
 							const orderPrice: number =
 								entryPrice - liquidationPrice > 0
 									? entryPrice - (entryPrice - liquidationPrice) * 0.9
 									: entryPrice + (liquidationPrice - entryPrice) * 0.9;
+							if (!!openOrders)
+								await client.cancelMultipleOrders({ symbol: event.order.symbol });
 							await client.submitNewOrder({
 								symbol: event.order.symbol,
 								side: event.order.orderSide,
@@ -126,8 +128,6 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 								priceProtect: "TRUE",
 								timeInForce: "GTC",
 							});
-							if (!!openOrders)
-								await client.cancelMultipleOrders({ symbol: event.order.symbol });
 						}
 					} else if (
 						event.order.orderStatus === "FILLED" &&
