@@ -54,13 +54,13 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 			};
 
 			const getPosition = async (symbol: string) => {
-				const allPositions = await getPositions();
+				const allPositions = await getPositions().then((res) => res);
 				const onePosition = allPositions.filter((pos) => pos.symbol === symbol);
 				return onePosition[0];
 			};
 
 			const getOpenOrders = async (symbol: string) => {
-				const allOrders = await client.getCurrentOpenOrder({ symbol });
+				const allOrders = await client.getAllOpenOrders({ symbol });
 				return allOrders;
 			};
 
@@ -80,9 +80,10 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 			wsBinance.subscribeUsdFuturesUserDataStream(false, true);
 
 			wsBinance.on("formattedUserDataMessage", async (event: WsUserDataEvents) => {
+				console.log(event);
 				if (event.eventType === "ORDER_TRADE_UPDATE") {
 					const position = await getPosition(event.order.symbol);
-					const balance = await getBalance(event.order.symbol);
+					const balance = await getBalance(event.order.commissionAsset);
 					const openOrders = await getOpenOrders(event.order.symbol);
 
 					if (event.order.orderStatus === "FILLED" && !event.order.isReduceOnly) {
@@ -105,15 +106,16 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 								type: "LIMIT",
 								quantity: posAmount,
 								price: Number(orderPrice.toFixed(3)),
+								timeInForce: "GTC",
 							});
 							await client.submitNewOrder({
 								symbol: event.order.symbol,
 								side: takeProfitSide,
 								type: "TAKE_PROFIT_MARKET",
 								stopPrice: takeProfitPrice,
-								reduceOnly: "true",
 								closePosition: "true",
 								priceProtect: "TRUE",
+								timeInForce: "GTC",
 							});
 							if (!!openOrders)
 								await client.cancelMultipleOrders({ symbol: event.order.symbol });
@@ -137,7 +139,6 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 						});
 					}
 				}
-				console.log(event);
 			});
 
 			console.log("Setting up socket");
