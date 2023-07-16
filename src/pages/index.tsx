@@ -167,8 +167,7 @@ export default function Home() {
 			console.log(error);
 		}
 	}
-	console.log(accountTrades);
-	console.log(incomeHistory.filter((inc) => inc));
+
 	async function getOrders() {
 		await client
 			.getAllOpenOrders()

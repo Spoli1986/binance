@@ -5,6 +5,7 @@ import {
 	FuturesAccountBalance,
 	FuturesOrderType,
 	FuturesPosition,
+	OrderResult,
 	OrderSide,
 	USDMClient,
 	WebsocketClient,
@@ -102,7 +103,9 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 				if (event.eventType === "ORDER_TRADE_UPDATE") {
 					const position = await getPosition(event.order.symbol);
 					const balance = await getBalance(event.order.commissionAsset);
-					const openOrders = await getOpenOrders(event.order.symbol);
+					const openOrders: void | OrderResult[] = await getOpenOrders(
+						event.order.symbol,
+					);
 
 					if (event.order.orderStatus === "FILLED" && !event.order.isReduceOnly) {
 						if (event.order.executionType === "TRADE") {
@@ -113,18 +116,41 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 							const takeProfitPrice: number =
 								posAmount < 0
 									? entryPrice - (50 / Number(position.leverage) / 100) * entryPrice
-									: entryPrice + 50 / Number(position.leverage) / 100 + entryPrice;
+									: entryPrice + (50 / Number(position.leverage) / 100) * entryPrice;
 							const orderPrice: number =
 								entryPrice - liquidationPrice > 0
-									? entryPrice - (entryPrice - liquidationPrice) * 0.9
-									: entryPrice + (liquidationPrice - entryPrice) * 0.9;
-							if (!!openOrders)
-								await client.cancelMultipleOrders({ symbol: event.order.symbol });
+									? entryPrice - (entryPrice - liquidationPrice) * 0.5
+									: entryPrice + (liquidationPrice - entryPrice) * 0.5;
+							console.log(
+								entryPrice,
+								"; ",
+								liquidationPrice,
+								"; ",
+								posAmount,
+								"; ",
+								takeProfitSide,
+								":",
+								takeProfitPrice,
+								";",
+								orderPrice,
+							);
+							if (openOrders && !!openOrders.length) {
+								openOrders.map(
+									async (order) =>
+										await client
+											.cancelMultipleOrders({
+												symbol: event.order.symbol,
+												orderIdList: [order.orderId],
+											})
+											.then((res) => res)
+											.catch((error) => console.log(error)),
+								);
+							}
 							await client.submitNewOrder({
 								symbol: event.order.symbol,
 								side: event.order.orderSide,
 								type: "LIMIT",
-								quantity: posAmount,
+								quantity: posAmount / 2,
 								price: Number(orderPrice.toFixed(3)),
 								timeInForce: "GTC",
 							});
@@ -132,7 +158,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 								symbol: event.order.symbol,
 								side: takeProfitSide,
 								type: "TAKE_PROFIT_MARKET",
-								stopPrice: takeProfitPrice,
+								stopPrice: Number(takeProfitPrice.toFixed(3)),
 								closePosition: "true",
 								priceProtect: "TRUE",
 								timeInForce: "GTC",
