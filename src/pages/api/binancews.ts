@@ -61,7 +61,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 			const getPosition = async (symbol: string) => {
 				const allPositions = await getPositions()
 					.then((res) => res)
-					.catch((err) => err);
+					.catch((err) => console.log(err));
 				const onePosition = allPositions.filter(
 					(pos: FuturesPosition) => pos.symbol === symbol,
 				);
@@ -72,19 +72,22 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 				const allOrders = await client
 					.getAllOpenOrders({ symbol })
 					.then((res) => res)
-					.catch((err) => err);
+					.catch((err) => console.log(err));
 				return allOrders;
 			};
 
 			const getBalance = async (assetSymbol: string) => {
 				const allAssetBalances = await client
 					.getBalance()
-					.then((res) => res)
-					.catch((err) => err);
-				const positionAssetBalance = allAssetBalances.filter(
-					(asset: FuturesAccountBalance) => asset.asset === assetSymbol,
-				);
-				return positionAssetBalance[0].availableBalance;
+					.then((res) => {
+						const positionAssetBalance = res.filter(
+							(asset: FuturesAccountBalance) => asset.asset === assetSymbol,
+						);
+						return positionAssetBalance[0].availableBalance;
+					})
+					.catch((err) => console.log(err));
+
+				return allAssetBalances;
 			};
 			const wsBinance = new WebsocketClient({
 				api_key: API_KEY,
