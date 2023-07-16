@@ -136,11 +136,10 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 							);
 							if (openOrders && !!openOrders.length) {
 								openOrders.map(async (order) => {
-									let orderList: number[] = [order.orderId];
 									await client
-										.cancelMultipleOrders({
+										.cancelOrder({
 											symbol: event.order.symbol,
-											orderIdList: orderList,
+											orderId: order.orderId,
 										})
 										.then((res) => res)
 										.catch((error) => console.log(error));
