@@ -69,12 +69,18 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 			};
 
 			const getOpenOrders = async (symbol: string) => {
-				const allOrders = await client.getAllOpenOrders({ symbol });
+				const allOrders = await client
+					.getAllOpenOrders({ symbol })
+					.then((res) => res)
+					.catch((err) => err);
 				return allOrders;
 			};
 
 			const getBalance = async (assetSymbol: string) => {
-				const allAssetBalances = await client.getBalance().catch((error) => error);
+				const allAssetBalances = await client
+					.getBalance()
+					.then((res) => res)
+					.catch((err) => err);
 				const positionAssetBalance = allAssetBalances.filter(
 					(asset: FuturesAccountBalance) => asset.asset === assetSymbol,
 				);

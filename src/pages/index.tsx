@@ -11,6 +11,8 @@ import {
 	FuturesOrderType,
 	FuturesPosition,
 	numberInString,
+	IncomeHistory,
+	FuturesPositionTrade,
 } from "binance";
 import { useEffect, useState } from "react";
 import axios from "axios";
@@ -60,6 +62,8 @@ export default function Home() {
 	const [selectedOrders, setSelectedOrders] = useState<number[]>([]);
 	const [positions, setPositions] = useState<FuturesPosition[]>([]);
 	const [allSymbols, setAllSymbols] = useState<string[]>([]);
+	const [incomeHistory, setIncomeHistory] = useState<IncomeHistory[]>([]);
+	const [accountTrades, setAccountTrades] = useState<FuturesPositionTrade[]>([]);
 	const handleToggle = (orderId: number) => {
 		if (selectedOrders.includes(orderId)) {
 			setSelectedOrders(selectedOrders.filter((id) => id !== orderId));
@@ -145,6 +149,26 @@ export default function Home() {
 			});
 	}
 
+	async function getAccountTrades() {
+		try {
+			await client
+				.getAccountTrades({ symbol: "GALAUSDT" })
+				.then((res) => setAccountTrades(res));
+		} catch (error) {
+			console.log(error);
+		}
+	}
+	async function GetIncomeHistory() {
+		try {
+			const incomeHistory = await client
+				.getIncomeHistory({ incomeType: "REALIZED_PNL" })
+				.then((res) => setIncomeHistory(res));
+		} catch (error) {
+			console.log(error);
+		}
+	}
+	console.log(accountTrades);
+	console.log(incomeHistory.filter((inc) => inc));
 	async function getOrders() {
 		await client
 			.getAllOpenOrders()
@@ -166,7 +190,9 @@ export default function Home() {
 		saveBalance();
 		getOrders();
 		takeProfitOrders();
-		startPriceSocket();
+		getAccountTrades();
+		GetIncomeHistory();
+		// startPriceSocket();
 	}, []);
 
 	return (
