@@ -71,7 +71,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 
 			const getOpenOrders = async (symbol: string) => {
 				const allOrders = await client
-					.getAllOpenOrders()
+					.getAllOpenOrders({ symbol })
 					.then((res) => res)
 					.catch((err) => console.log(err));
 				return allOrders;
