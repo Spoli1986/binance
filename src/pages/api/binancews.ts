@@ -63,7 +63,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 				const allPositions = await getPositions()
 					.then((res) => res)
 					.catch((err) => console.log(err));
-				const onePosition = allPositions.filter(
+				const onePosition: FuturesPosition[] = allPositions.filter(
 					(pos: FuturesPosition) => pos.symbol === symbol,
 				);
 				return onePosition[0];
@@ -71,7 +71,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 
 			const getOpenOrders = async (symbol: string) => {
 				const allOrders = await client
-					.getAllOpenOrders({ symbol })
+					.getAllOpenOrders()
 					.then((res) => res)
 					.catch((err) => console.log(err));
 				return allOrders;
@@ -111,7 +111,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 						if (event.order.executionType === "TRADE") {
 							const entryPrice: number = Number(position.entryPrice);
 							const liquidationPrice = Number(position.liquidationPrice);
-							const posAmount = Number(position.positionAmt);
+							const posAmount = Number(event.order.originalQuantity);
 							const takeProfitSide: OrderSide = posAmount < 0 ? "BUY" : "SELL";
 							const takeProfitPrice: number =
 								posAmount < 0
