@@ -190,9 +190,9 @@ export default function Home() {
 		saveBalance();
 		getOrders();
 		takeProfitOrders();
-		getAccountTrades();
-		GetIncomeHistory();
-		// startPriceSocket();
+		// getAccountTrades();
+		// GetIncomeHistory();
+		startPriceSocket();
 	}, []);
 
 	return (
