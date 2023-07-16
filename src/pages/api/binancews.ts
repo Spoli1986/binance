@@ -135,16 +135,16 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 								orderPrice,
 							);
 							if (openOrders && !!openOrders.length) {
-								openOrders.map(
-									async (order) =>
-										await client
-											.cancelMultipleOrders({
-												symbol: event.order.symbol,
-												orderIdList: [order.orderId],
-											})
-											.then((res) => res)
-											.catch((error) => console.log(error)),
-								);
+								openOrders.map(async (order) => {
+									let orderList: number[] = [order.orderId];
+									await client
+										.cancelMultipleOrders({
+											symbol: event.order.symbol,
+											orderIdList: orderList,
+										})
+										.then((res) => res)
+										.catch((error) => console.log(error));
+								});
 							}
 							await client.submitNewOrder({
 								symbol: event.order.symbol,
