@@ -191,7 +191,6 @@ export default function Home() {
 		takeProfitOrders();
 		// getAccountTrades();
 		// GetIncomeHistory();
-		startPriceSocket();
 	}, []);
 
 	return (
@@ -221,7 +220,7 @@ export default function Home() {
 			<h1 className="text-3xl text-blue-800 font-bold underline my-10">
 				Current prices:
 			</h1>
-			<button onClick={getPrices}>Get Price</button>
+			<button onClick={startPriceSocket}>Start server</button>
 			{/* {markPrice.map((obj, i) => {
 				return (
 					<p key={i}>

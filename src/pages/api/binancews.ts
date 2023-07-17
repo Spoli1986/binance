@@ -95,7 +95,9 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 				api_secret: API_SECRET,
 				beautify: true,
 			});
-
+			// wsBinance.on("open", (event) => {
+			// 	console.log(event);
+			// });
 			wsBinance.subscribeUsdFuturesUserDataStream(false, true);
 
 			wsBinance.on("formattedUserDataMessage", async (event: WsUserDataEvents) => {
@@ -111,22 +113,28 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 						if (event.order.executionType === "TRADE") {
 							const entryPrice: number = Number(position.entryPrice);
 							const liquidationPrice = Number(position.liquidationPrice);
-							const posAmount = Number(event.order.originalQuantity);
-							const takeProfitSide: OrderSide = posAmount < 0 ? "BUY" : "SELL";
+							const posAmount =
+								Number(position.positionAmt) > 0
+									? Number(position.positionAmt)
+									: -1 * Number(position.positionAmt);
+							const entryMargin = Number(position.isolatedWallet);
+							const takeProfitSide: OrderSide =
+								event.order.orderSide === "SELL" ? "BUY" : "SELL";
 							const takeProfitPrice: number =
-								posAmount < 0
-									? entryPrice - (50 / Number(position.leverage) / 100) * entryPrice
-									: entryPrice + (50 / Number(position.leverage) / 100) * entryPrice;
+								entryMargin / 2 / Number(position.positionAmt) + entryPrice;
 							const orderPrice: number =
 								entryPrice - liquidationPrice > 0
 									? entryPrice - (entryPrice - liquidationPrice) * 0.5
 									: entryPrice + (liquidationPrice - entryPrice) * 0.5;
+
 							console.log(
 								entryPrice,
 								"; ",
 								liquidationPrice,
 								"; ",
 								posAmount,
+								"; ",
+								Number(position.positionAmt),
 								"; ",
 								takeProfitSide,
 								":",
@@ -149,7 +157,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 								symbol: event.order.symbol,
 								side: event.order.orderSide,
 								type: "LIMIT",
-								quantity: posAmount / 2,
+								quantity: Number((posAmount / 2).toFixed(0)),
 								price: Number(orderPrice.toFixed(3)),
 								timeInForce: "GTC",
 							});
