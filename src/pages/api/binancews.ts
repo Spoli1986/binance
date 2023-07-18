@@ -123,9 +123,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 							const takeProfitPrice: number =
 								entryMargin / 2 / Number(position.positionAmt) + entryPrice;
 							const orderPrice: number =
-								entryPrice - liquidationPrice > 0
-									? entryPrice - (entryPrice - liquidationPrice) * 0.5
-									: entryPrice + (liquidationPrice - entryPrice) * 0.5;
+								entryMargin / -2 / Number(position.positionAmt) + entryPrice;
 
 							console.log(
 								entryPrice,
