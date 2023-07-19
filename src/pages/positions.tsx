@@ -100,6 +100,14 @@ export default function Positions() {
 		setPositions(takeProfitOrders.myPositions);
 	};
 
+	const startWebSocket = async () => {
+		try {
+			await axios.get("/api/binancews");
+		} catch (error) {
+			console.log(error);
+		}
+	};
+
 	return (
 		<div className="flex flex-col items-center justify-center w-screen">
 			<h1 className="text-3xl text-blue-800 font-bold underline my-10">Wallet</h1>
@@ -227,6 +235,12 @@ export default function Positions() {
 					</tbody>
 				</table>
 			</div>
+			<button
+				onClick={startWebSocket}
+				className="text-3xl text-red-500 py-2 px-4 border border-red-500 rounded-md hover:bg-red-500 hover:text-white font-bold my-10 transition-colors duration-200"
+			>
+				Start
+			</button>
 			<h1 className="text-3xl text-blue-800 font-bold underline my-10">
 				New Order
 			</h1>
