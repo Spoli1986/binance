@@ -130,8 +130,6 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 								"; ",
 								liquidationPrice,
 								"; ",
-								posAmount,
-								"; ",
 								Number(position.positionAmt),
 								"; ",
 								takeProfitSide,
@@ -139,6 +137,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 								takeProfitPrice,
 								";",
 								orderPrice,
+								position.leverage + "x",
 							);
 							if (openOrders && !!openOrders.length) {
 								openOrders.map(async (order) => {
@@ -173,7 +172,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 						event.order.orderStatus === "FILLED" &&
 						event.order.originalOrderType === "TAKE_PROFIT_MARKET"
 					) {
-						const leverage = Number(position.leverage);
+						const leverage = Number(position.leverage) || 20;
 						const lastFilledPrice = event.order.lastFilledPrice;
 						const twoPercent = Number(balance) * 0.02;
 						const quantity = twoPercent / (lastFilledPrice / leverage);
