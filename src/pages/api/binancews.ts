@@ -188,7 +188,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 								event.order.orderStatus === "FILLED" &&
 								event.order.originalOrderType === "TAKE_PROFIT_MARKET"
 							) {
-								const leverage = Number(position.leverage) || 20;
+								const leverage = 20;
 								const lastFilledPrice = event.order.lastFilledPrice;
 								const twoPercent = Number(balance) * 0.02;
 								const quantity = twoPercent / (lastFilledPrice / leverage);
