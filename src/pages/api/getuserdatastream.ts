@@ -36,6 +36,12 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 					api_secret: API_SECRET,
 				});
 
+				const exchangeInfo = await client
+					.getExchangeInfo()
+					.then((res) => {
+						return res;
+					})
+					.catch((error) => console.log(error));
 				const allOrders = await client
 					.getAllOpenOrders()
 					.then((res) => res)
@@ -87,7 +93,9 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 					return { myPositions, mySymbols };
 				});
 
-				res.status(200).json({ allAssetBalances, allOrders, takeProfitOrders });
+				res
+					.status(200)
+					.json({ allAssetBalances, allOrders, takeProfitOrders, exchangeInfo });
 			} else {
 				// Not Signed in
 				res.status(401).json({ message: "Reaalllyy???" });

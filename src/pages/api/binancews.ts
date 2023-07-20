@@ -53,6 +53,16 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 					api_secret: API_SECRET,
 				});
 
+				const getExchangeInfo = async () => {
+					const exchangeInfo = await client
+						.getExchangeInfo()
+						.then((res) => {
+							return res;
+						})
+						.catch((error) => console.log(error));
+					return exchangeInfo;
+				};
+
 				const getPositions = async () => {
 					const positions = await client
 						.getPositions()
@@ -185,7 +195,15 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 								const side: OrderSide =
 									event.order.orderSide === "SELL" ? "BUY" : "SELL";
 								if (!!openOrders)
-									await client.cancelMultipleOrders({ symbol: event.order.symbol });
+									openOrders.map(async (order) => {
+										await client
+											.cancelOrder({
+												symbol: event.order.symbol,
+												orderId: order.orderId,
+											})
+											.then((res) => res)
+											.catch((error) => console.log(error));
+									});
 								await client.submitNewOrder({
 									symbol: event.order.symbol,
 									side: side,
