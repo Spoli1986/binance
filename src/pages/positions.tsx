@@ -13,6 +13,7 @@ import {
 	numberInString,
 	IncomeHistory,
 	FuturesPositionTrade,
+	FuturesExchangeInfo,
 } from "binance";
 import { ReactNode, useEffect, useState } from "react";
 import axios from "axios";
@@ -32,6 +33,7 @@ type DataProps = {
 		myPositions: FuturesPosition[];
 		mySymbols: string[];
 	};
+	exchangeInfo: FuturesExchangeInfo;
 };
 const ignoredSillyLogMsgs = [
 	"Sending ping",
@@ -66,6 +68,7 @@ export default function Positions() {
 	const [side, setSide] = useState<OrderSide>("BUY");
 	const [type, setType] = useState<FuturesOrderType>("LIMIT");
 	const [quantity, setQuantity] = useState<number>(0);
+	const [exchangeInfo, setExchangeInfo] = useState<FuturesExchangeInfo>();
 
 	const [markPrice, setMarkPrice] = useState<SymbolPriceType[]>([]);
 	const [selectedOrders, setSelectedOrders] = useState<number[]>([]);
@@ -90,6 +93,7 @@ export default function Positions() {
 			allAssetBalances,
 			allOrders,
 			takeProfitOrders,
+			exchangeInfo,
 		}: DataProps = (await axios.get("/api/getuserdatastream")).data;
 		setBalance({
 			busdBalance: allAssetBalances.filter((asset) => asset.asset === "BUSD"),
