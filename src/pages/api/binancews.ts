@@ -12,6 +12,7 @@ import {
 	WsUserDataEvents,
 } from "binance";
 import { getSession } from "next-auth/react";
+import axios from "axios";
 
 export const config = {
 	api: {
@@ -53,11 +54,18 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 					api_secret: API_SECRET,
 				});
 
-				const getExchangeInfo = async () => {
+				const getExchangeInfo = async (sym: string) => {
 					const exchangeInfo = await client
 						.getExchangeInfo()
 						.then((res) => {
-							return res;
+							const quantityPrecision = res.symbols.filter(
+								(symbol) => symbol.symbol === sym,
+							)[0].quantityPrecision;
+							const pricePrecision = res.symbols.filter(
+								(symbol) => symbol.symbol === sym,
+							)[0].pricePrecision;
+
+							return { quantityPrecision, pricePrecision };
 						})
 						.catch((error) => console.log(error));
 					return exchangeInfo;
@@ -109,6 +117,30 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 					api_secret: API_SECRET,
 					beautify: true,
 				});
+
+				const exchangeInfo = async (symbol: string) => {
+					const precisions = await axios
+						.get("https://api.binance.com/api/v3/exchangeInfo?symbol=" + symbol)
+						.then((res) => {
+							const tickSize =
+								res.data.symbols[0]["filters"]
+									.filter((filter: any) => filter.filterType === "PRICE_FILTER")[0]
+									.tickSize.split(".")
+									.pop()
+									.indexOf("1") + 1;
+							const stepSize = res.data.symbols[0]["filters"].filter(
+								(filter: any) => filter.filterType === "LOT_SIZE",
+							)[0];
+
+							const place =
+								Number(stepSize.stepSize) < 1
+									? stepSize.stepSize.split(".").pop().indexOf("1")
+									: 0;
+							console.log(tickSize, place);
+							return [tickSize, place];
+						});
+					return precisions;
+				};
 				// wsBinance.on("open", (event) => {
 				// 	console.log(event);
 				// });
@@ -124,6 +156,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 							const openOrders: void | OrderResult[] = await getOpenOrders(
 								event.order.symbol,
 							);
+							const precisions = await exchangeInfo(event.order.symbol);
 
 							if (event.order.orderStatus === "FILLED" && !event.order.isReduceOnly) {
 								if (event.order.executionType === "TRADE") {
@@ -170,15 +203,15 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 										symbol: event.order.symbol,
 										side: event.order.orderSide,
 										type: "LIMIT",
-										quantity: Number((posAmount / 2).toFixed(0)),
-										price: Number(orderPrice.toFixed(3)),
+										quantity: Number((posAmount / 2).toFixed(precisions[1])),
+										price: Number(orderPrice.toFixed(precisions[0])),
 										timeInForce: "GTC",
 									});
 									await client.submitNewOrder({
 										symbol: event.order.symbol,
 										side: takeProfitSide,
 										type: "TAKE_PROFIT_MARKET",
-										stopPrice: Number(takeProfitPrice.toFixed(3)),
+										stopPrice: Number(takeProfitPrice.toFixed(precisions[0])),
 										closePosition: "true",
 										priceProtect: "TRUE",
 										timeInForce: "GTC",
@@ -191,7 +224,9 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 								const leverage = 20;
 								const lastFilledPrice = event.order.lastFilledPrice;
 								const twoPercent = Number(balance) * 0.02;
-								const quantity = twoPercent / (lastFilledPrice / leverage);
+								const quantity = Number(
+									(twoPercent / (lastFilledPrice / leverage)).toFixed(precisions[1]),
+								);
 								const side: OrderSide =
 									event.order.orderSide === "SELL" ? "BUY" : "SELL";
 								if (!!openOrders)

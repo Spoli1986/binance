@@ -2,6 +2,7 @@ import { NextApiRequest, NextApiResponse } from "next";
 import { ResponseFuncs } from "../../../utils/types";
 import { DefaultLogger, FuturesAccountBalance, USDMClient } from "binance";
 import { getSession } from "next-auth/react";
+import axios from "axios";
 
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
 	const catcher = (error: Error) => res.status(400).json({ error });
@@ -36,12 +37,6 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 					api_secret: API_SECRET,
 				});
 
-				const exchangeInfo = await client
-					.getExchangeInfo()
-					.then((res) => {
-						return res;
-					})
-					.catch((error) => console.log(error));
 				const allOrders = await client
 					.getAllOpenOrders()
 					.then((res) => res)
@@ -93,9 +88,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 					return { myPositions, mySymbols };
 				});
 
-				res
-					.status(200)
-					.json({ allAssetBalances, allOrders, takeProfitOrders, exchangeInfo });
+				res.status(200).json({ allAssetBalances, allOrders, takeProfitOrders });
 			} else {
 				// Not Signed in
 				res.status(401).json({ message: "Reaalllyy???" });

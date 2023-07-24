@@ -25,6 +25,13 @@ type Balances = {
 	busdBalance: FuturesAccountBalance[];
 };
 
+type FilterType = {
+	filterType: string;
+	maxPrice: string;
+	minPrice: string;
+	tickSize: string;
+};
+
 type DataProps = {
 	positions: FuturesPosition[];
 	allAssetBalances: FuturesAccountBalance[];
@@ -68,7 +75,7 @@ export default function Positions() {
 	const [side, setSide] = useState<OrderSide>("BUY");
 	const [type, setType] = useState<FuturesOrderType>("LIMIT");
 	const [quantity, setQuantity] = useState<number>(0);
-	const [exchangeInfo, setExchangeInfo] = useState<FuturesExchangeInfo>();
+	const [exchangeInfo, setExchangeInfo] = useState<any>();
 
 	const [markPrice, setMarkPrice] = useState<SymbolPriceType[]>([]);
 	const [selectedOrders, setSelectedOrders] = useState<number[]>([]);
@@ -86,6 +93,7 @@ export default function Positions() {
 
 	useEffect(() => {
 		startPriceSocket();
+		// axiosExchangeInfo();
 	}, []);
 	const startPriceSocket = async () => {
 		const {
@@ -102,6 +110,7 @@ export default function Positions() {
 		setOpenOrder(allOrders);
 		setAllSymbols(takeProfitOrders.mySymbols);
 		setPositions(takeProfitOrders.myPositions);
+		// setExchangeInfo(exchangeInfo);
 	};
 
 	const startWebSocket = async () => {
@@ -136,6 +145,7 @@ export default function Positions() {
 					</tr>
 				</tbody>
 			</table>
+			<div></div>
 			<h1 className="text-3xl text-blue-800 font-bold underline my-10">
 				Open Orders
 			</h1>
