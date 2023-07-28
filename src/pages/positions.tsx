@@ -115,6 +115,7 @@ export default function Positions() {
 
 	const startWebSocket = async () => {
 		try {
+			// await axios.get("/api/levi");
 			await axios.get("/api/binancews");
 		} catch (error) {
 			console.log(error);

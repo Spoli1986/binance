@@ -139,6 +139,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 								event.order.symbol,
 							);
 							const precisions = await exchangeInfo(event.order.symbol);
+
 							const posPercentage = position
 								? (Number(position.isolatedWallet) / Number(balance)) * 100
 								: 0;
@@ -156,6 +157,8 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 										event.order.orderSide === "SELL" ? "BUY" : "SELL";
 									const takeProfitPrice: number =
 										entryMargin / 2 / Number(position.positionAmt) + entryPrice;
+									const takeProfitPricePartial: number =
+										entryMargin / 4 / Number(position.positionAmt) + entryPrice;
 									const orderPrice: number =
 										entryMargin / -2 / Number(position.positionAmt) + entryPrice;
 
@@ -169,6 +172,8 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 										takeProfitSide,
 										":",
 										takeProfitPrice,
+										";",
+										takeProfitPricePartial,
 										";",
 										orderPrice,
 										position.leverage + "x",
@@ -211,6 +216,17 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 										closePosition: "true",
 										priceProtect: "TRUE",
 										timeInForce: "GTC",
+									});
+									await client.submitNewOrder({
+										symbol: event.order.symbol,
+										side: takeProfitSide,
+										type: "TAKE_PROFIT",
+										quantity: Number((posAmount / 2).toFixed(precisions[1])),
+										price: Number(takeProfitPricePartial.toFixed(precisions[0])),
+										stopPrice: Number(takeProfitPricePartial.toFixed(precisions[0])),
+										priceProtect: "TRUE",
+										timeInForce: "GTC",
+										reduceOnly: "true",
 									});
 								}
 							} else if (
