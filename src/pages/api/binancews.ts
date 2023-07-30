@@ -103,15 +103,18 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 
 				const exchangeInfo = async (symbol: string) => {
 					const precisions = await axios
-						.get("https://fapi.binance.com/fapi/v1/exchangeInfo?symbol=" + symbol)
+						.get("https://fapi.binance.com/fapi/v1/exchangeInfo")
 						.then((res) => {
+							const symbolInfoArray = res.data.symbols.filter(
+								(sym: any) => sym.symbol === symbol,
+							);
 							const tickSize =
-								res.data.symbols[0]["filters"]
+								symbolInfoArray[0]["filters"]
 									.filter((filter: any) => filter.filterType === "PRICE_FILTER")[0]
 									.tickSize.split(".")
 									.pop()
 									.indexOf("1") + 1;
-							const stepSize = res.data.symbols[0]["filters"].filter(
+							const stepSize = symbolInfoArray[0]["filters"].filter(
 								(filter: any) => filter.filterType === "LOT_SIZE",
 							)[0];
 

@@ -93,7 +93,7 @@ export default function Positions() {
 
 	useEffect(() => {
 		startPriceSocket();
-		// axiosExchangeInfo();
+		// axiosExchangeInfo("APEUSDT");
 	}, []);
 	const startPriceSocket = async () => {
 		const {
@@ -112,18 +112,21 @@ export default function Positions() {
 		setPositions(takeProfitOrders.myPositions);
 		// setExchangeInfo(exchangeInfo);
 	};
-	const axiosExchangeInfo = async () => {
-		const exchangeInfo = await axios
-			.get("https://fapi.binance.com/fapi/v1/exchangeInfo?symbol=WAVESUSDT")
+	const axiosExchangeInfo = async (symbol: string) => {
+		const precisions = await axios
+			.get("https://fapi.binance.com/fapi/v1/exchangeInfo")
 			.then((res) => {
-				console.log(res.data);
+				const symbolInfoArray = res.data.symbols.filter(
+					(sym: any) => sym.symbol === symbol,
+				);
+				console.log(symbolInfoArray);
 				const tickSize =
-					res.data.symbols[0]["filters"]
+					symbolInfoArray[0]["filters"]
 						.filter((filter: any) => filter.filterType === "PRICE_FILTER")[0]
 						.tickSize.split(".")
 						.pop()
 						.indexOf("1") + 1;
-				const stepSize = res.data.symbols[0]["filters"].filter(
+				const stepSize = symbolInfoArray[0]["filters"].filter(
 					(filter: any) => filter.filterType === "LOT_SIZE",
 				)[0];
 
@@ -131,10 +134,11 @@ export default function Positions() {
 					Number(stepSize.stepSize) < 1
 						? stepSize.stepSize.split(".").pop().indexOf("1") + 1
 						: 0;
-				setExchangeInfo([tickSize, place]);
+				return [tickSize, place];
 			});
+		setExchangeInfo(precisions);
 	};
-	console.log(exchangeInfo);
+
 	const startWebSocket = async () => {
 		try {
 			// await axios.get("/api/levi");
