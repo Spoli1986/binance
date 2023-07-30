@@ -117,7 +117,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 
 							const place =
 								Number(stepSize.stepSize) < 1
-									? stepSize.stepSize.split(".").pop().indexOf("1")
+									? stepSize.stepSize.split(".").pop().indexOf("1") + 1
 									: 0;
 							return [tickSize, place];
 						});
@@ -156,22 +156,18 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 										event.order.orderSide === "SELL" ? "BUY" : "SELL";
 									const takeProfitPrice: number =
 										entryMargin / 2 / Number(position.positionAmt) + entryPrice;
+									const takeProfitPricePartial: number =
+										entryMargin / 4 / Number(position.positionAmt) + entryPrice;
 									const orderPrice: number =
 										entryMargin / -2 / Number(position.positionAmt) + entryPrice;
 
 									console.log(
-										entryPrice,
+										"quantity: ",
+										Number((posAmount / 2).toFixed(precisions[1])),
 										"; ",
-										liquidationPrice,
-										"; ",
-										Number(position.positionAmt),
-										"; ",
-										takeProfitSide,
-										":",
-										takeProfitPrice,
-										";",
-										orderPrice,
-										position.leverage + "x",
+										"order price: ",
+										Number(orderPrice.toFixed(precisions[0])),
+										precisions,
 									);
 									if (openOrders && !!openOrders.length) {
 										openOrders.map(async (order) => {
@@ -184,7 +180,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 												.catch((error) => console.log(error));
 										});
 									}
-									if (posPercentage > 4) {
+									if (posPercentage > 17) {
 										await client.submitNewOrder({
 											symbol: event.order.symbol,
 											side: takeProfitSide,
@@ -201,6 +197,19 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 											quantity: Number((posAmount / 2).toFixed(precisions[1])),
 											price: Number(orderPrice.toFixed(precisions[0])),
 											timeInForce: "GTC",
+										});
+									}
+									if (posPercentage > 10) {
+										await client.submitNewOrder({
+											symbol: event.order.symbol,
+											side: takeProfitSide,
+											type: "TAKE_PROFIT",
+											quantity: Number((posAmount / 2).toFixed(precisions[1])),
+											price: Number(takeProfitPricePartial.toFixed(precisions[0])),
+											stopPrice: Number(takeProfitPricePartial.toFixed(precisions[0])),
+											priceProtect: "TRUE",
+											timeInForce: "GTC",
+											reduceOnly: "true",
 										});
 									}
 									await client.submitNewOrder({
