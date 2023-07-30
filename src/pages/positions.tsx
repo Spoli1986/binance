@@ -114,7 +114,7 @@ export default function Positions() {
 	};
 	const axiosExchangeInfo = async () => {
 		const exchangeInfo = await axios
-			.get("https://api.binance.com/api/v3/exchangeInfo?symbol=ATOMUSDT")
+			.get("https://fapi.binance.com/fapi/v1/exchangeInfo?symbol=WAVESUSDT")
 			.then((res) => {
 				console.log(res.data);
 				const tickSize =

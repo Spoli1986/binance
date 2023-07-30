@@ -103,7 +103,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 
 				const exchangeInfo = async (symbol: string) => {
 					const precisions = await axios
-						.get("https://api.binance.com/api/v3/exchangeInfo?symbol=" + symbol)
+						.get("https://fapi.binance.com/fapi/v1/exchangeInfo?symbol=" + symbol)
 						.then((res) => {
 							const tickSize =
 								res.data.symbols[0]["filters"]
