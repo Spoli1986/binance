@@ -253,6 +253,78 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 									type: "MARKET",
 									quantity: quantity,
 								});
+							} else if (
+								event.order.orderStatus === "FILLED" &&
+								event.order.originalOrderType === "TAKE_PROFIT"
+							) {
+								const entryPrice: number = Number(position.entryPrice);
+								const liquidationPrice = Number(position.liquidationPrice);
+								const posAmount =
+									Number(position.positionAmt) > 0
+										? Number(position.positionAmt)
+										: -1 * Number(position.positionAmt);
+								const entryMargin = Number(position.isolatedWallet);
+								const takeProfitSide: OrderSide =
+									event.order.orderSide === "SELL" ? "BUY" : "SELL";
+								const takeProfitPrice: number =
+									entryMargin / 2 / Number(position.positionAmt) + entryPrice;
+								const takeProfitPricePartial: number =
+									entryMargin / 4 / Number(position.positionAmt) + entryPrice;
+								const orderPrice: number =
+									entryMargin / -2 / Number(position.positionAmt) + entryPrice;
+
+								if (openOrders && !!openOrders.length) {
+									openOrders.map(async (order) => {
+										await client
+											.cancelOrder({
+												symbol: event.order.symbol,
+												orderId: order.orderId,
+											})
+											.then((res) => res)
+											.catch((error) => console.log(error));
+									});
+								}
+								if (posPercentage > 17) {
+									await client.submitNewOrder({
+										symbol: event.order.symbol,
+										side: takeProfitSide,
+										type: "STOP_MARKET",
+										stopPrice: Number(orderPrice.toFixed(precisions[0])),
+										timeInForce: "GTC",
+										closePosition: "true",
+									});
+								} else {
+									await client.submitNewOrder({
+										symbol: event.order.symbol,
+										side: event.order.orderSide,
+										type: "LIMIT",
+										quantity: Number((posAmount / 2).toFixed(precisions[1])),
+										price: Number(orderPrice.toFixed(precisions[0])),
+										timeInForce: "GTC",
+									});
+								}
+								if (posPercentage > 10) {
+									await client.submitNewOrder({
+										symbol: event.order.symbol,
+										side: takeProfitSide,
+										type: "TAKE_PROFIT",
+										quantity: Number((posAmount / 2).toFixed(precisions[1])),
+										price: Number(takeProfitPricePartial.toFixed(precisions[0])),
+										stopPrice: Number(takeProfitPricePartial.toFixed(precisions[0])),
+										priceProtect: "TRUE",
+										timeInForce: "GTC",
+										reduceOnly: "true",
+									});
+								}
+								await client.submitNewOrder({
+									symbol: event.order.symbol,
+									side: takeProfitSide,
+									type: "TAKE_PROFIT_MARKET",
+									stopPrice: Number(takeProfitPrice.toFixed(precisions[0])),
+									closePosition: "true",
+									priceProtect: "TRUE",
+									timeInForce: "GTC",
+								});
 							}
 						}
 					},
