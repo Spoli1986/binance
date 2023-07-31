@@ -89,7 +89,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 							const positionAssetBalance = res.filter(
 								(asset: FuturesAccountBalance) => asset.asset === assetSymbol,
 							);
-							return positionAssetBalance[0].availableBalance;
+							return positionAssetBalance[0].balance;
 						})
 						.catch((err) => console.log(err));
 
