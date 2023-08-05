@@ -15,7 +15,7 @@ export default function Starter({}: Props) {
 
 	const startWebSocketLevi = async () => {
 		try {
-			await axios.get("/api/levi");
+			await axios.post("/api/levi");
 		} catch (error) {
 			console.log(error);
 		}
