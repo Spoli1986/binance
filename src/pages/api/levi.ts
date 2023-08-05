@@ -22,17 +22,29 @@ export const config = {
 
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
 	const catcher = (error: Error) => res.status(400).json({ error });
+	const API_KEY = process.env.NEXT_PUBLIC_BINANCE_KEY_LEVI;
+	const API_SECRET = process.env.NEXT_PUBLIC_BINANCE_SECRET_LEVI;
+
+	const client = new USDMClient({
+		api_key: API_KEY,
+		api_secret: API_SECRET,
+	});
+
+	const wsBinance = new WebsocketClient({
+		api_key: API_KEY,
+		api_secret: API_SECRET,
+		beautify: true,
+	});
 
 	const method: keyof ResponseFuncs = req.method as keyof ResponseFuncs;
 
 	const handleCase: ResponseFuncs = {
-		GET: async (req: NextApiRequest, res: NextApiResponse) => {
+		GET: async (req: NextApiRequest, res: NextApiResponse) => {},
+
+		POST: async (req: NextApiRequest, res: NextApiResponse) => {
 			const session = await getSession({ req });
 
 			if (session) {
-				const API_KEY = process.env.NEXT_PUBLIC_BINANCE_KEY_LEVI;
-				const API_SECRET = process.env.NEXT_PUBLIC_BINANCE_SECRET_LEVI;
-
 				const ignoredSillyLogMsgs = [
 					"Sending ping",
 					"Received pong, clearing pong timer",
@@ -48,11 +60,6 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 						console.log(JSON.stringify({ msg, context }));
 					},
 				};
-
-				const client = new USDMClient({
-					api_key: API_KEY,
-					api_secret: API_SECRET,
-				});
 
 				const getPositions = async () => {
 					const positions = await client
@@ -95,11 +102,6 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 
 					return allAssetBalances;
 				};
-				const wsBinance = new WebsocketClient({
-					api_key: API_KEY,
-					api_secret: API_SECRET,
-					beautify: true,
-				});
 
 				const exchangeInfo = async (symbol: string) => {
 					const precisions = await axios
