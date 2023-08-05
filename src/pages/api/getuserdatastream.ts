@@ -45,11 +45,12 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 				const allAssetBalances = await client
 					.getBalance()
 					.then((res) => {
-						const positionAssetBalance: FuturesAccountBalance[] = res.filter(
-							(asset: FuturesAccountBalance) =>
-								asset.asset === "BUSD" || asset.asset === "USDT",
-						);
-						return positionAssetBalance;
+						// const positionAssetBalance: FuturesAccountBalance[] = res.filter(
+						// 	(asset: FuturesAccountBalance) =>
+						// 		asset.asset === "BUSD" || asset.asset === "USDT",
+						// );
+						// return positionAssetBalance;
+						return res;
 					})
 					.catch((err) => console.log(err));
 

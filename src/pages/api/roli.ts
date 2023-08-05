@@ -30,8 +30,8 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 			const session = await getSession({ req });
 
 			if (session) {
-				const API_KEY = process.env.NEXT_PUBLIC_BINANCE_KEY;
-				const API_SECRET = process.env.NEXT_PUBLIC_BINANCE_SECRET;
+				const API_KEY = process.env.NEXT_PUBLIC_BINANCE_KEY_ROLI;
+				const API_SECRET = process.env.NEXT_PUBLIC_BINANCE_SECRET_ROLI;
 
 				const ignoredSillyLogMsgs = [
 					"Sending ping",
@@ -126,9 +126,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 						});
 					return precisions;
 				};
-				// wsBinance.on("open", (event) => {
-				// 	console.log(event);
-				// });
+
 				wsBinance.subscribeUsdFuturesUserDataStream(false, true);
 
 				wsBinance.on(
@@ -137,11 +135,15 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 						console.log("MY:::: ", event);
 						if (event.eventType === "ORDER_TRADE_UPDATE") {
 							const position = await getPosition(event.order.symbol);
+
 							const balance = await getBalance(event.order.commissionAsset);
+
 							const openOrders: void | OrderResult[] = await getOpenOrders(
 								event.order.symbol,
 							);
+
 							const precisions = await exchangeInfo(event.order.symbol);
+
 							const posPercentage = position
 								? (Number(position.isolatedWallet) / Number(balance)) * 100
 								: 0;
@@ -152,15 +154,36 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 								Number(position.positionAmt) > 0
 									? Number(position.positionAmt)
 									: -1 * Number(position.positionAmt);
-							const entryMargin = Number(position.isolatedWallet);
+
+							const calcMargin: number =
+								Number(position.notional) / Number(position.leverage);
+
+							const intMargin = calcMargin < 0 ? calcMargin * -1 : calcMargin;
+
+							const entryMargin = intMargin < 12 ? 12 : intMargin;
+
 							const takeProfitSide: OrderSide =
 								event.order.orderSide === "SELL" ? "BUY" : "SELL";
+
 							const takeProfitPrice: number =
+								entryMargin / Number(position.positionAmt) + entryPrice;
+
+							const takeProfitPrice50Perc: number =
 								(entryMargin * 0.5) / Number(position.positionAmt) + entryPrice;
-							const takeProfitPricePartial: number =
+
+							const takeProfitPrice25Perc: number =
 								(entryMargin * 0.25) / Number(position.positionAmt) + entryPrice;
+
+							const orderSide: OrderSide =
+								event.order.orderSide === "SELL" ? "BUY" : "SELL";
+
 							const orderPrice: number =
-								(entryMargin * -0.75) / Number(position.positionAmt) + entryPrice;
+								entryMargin / Number(position.positionAmt) + entryPrice;
+
+							const fileteredOrders: OrderResult[] = openOrders!.filter(
+								(order) => order.origType === "LIMIT",
+							);
+
 							if (
 								event.order.orderStatus === "FILLED" &&
 								!event.order.isReduceOnly &&
@@ -186,38 +209,40 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 												.catch((error) => console.log(error));
 										});
 									}
-									if (posPercentage > 17) {
-										await client.submitNewOrder({
-											symbol: event.order.symbol,
-											side: takeProfitSide,
-											type: "STOP_MARKET",
-											stopPrice: Number(orderPrice.toFixed(precisions[0])),
-											timeInForce: "GTC",
-											closePosition: "true",
-										});
-									} else {
-										await client.submitNewOrder({
-											symbol: event.order.symbol,
-											side: event.order.orderSide,
-											type: "LIMIT",
-											quantity: Number(posAmount.toFixed(precisions[1])),
-											price: Number(orderPrice.toFixed(precisions[0])),
-											timeInForce: "GTC",
-										});
-									}
-									if (posPercentage > 10) {
-										await client.submitNewOrder({
-											symbol: event.order.symbol,
-											side: takeProfitSide,
-											type: "TAKE_PROFIT",
-											quantity: Number(posAmount.toFixed(precisions[1])),
-											price: Number(takeProfitPricePartial.toFixed(precisions[0])),
-											stopPrice: Number(takeProfitPricePartial.toFixed(precisions[0])),
-											priceProtect: "TRUE",
-											timeInForce: "GTC",
-											reduceOnly: "true",
-										});
-									}
+
+									await client.submitNewOrder({
+										symbol: event.order.symbol,
+										side: event.order.orderSide,
+										type: "LIMIT",
+										quantity: Number(posAmount.toFixed(precisions[1])),
+										price: Number(orderPrice.toFixed(precisions[0])),
+										timeInForce: "GTC",
+									});
+
+									await client.submitNewOrder({
+										symbol: event.order.symbol,
+										side: takeProfitSide,
+										type: "TAKE_PROFIT",
+										quantity: Number((posAmount * 0.25).toFixed(precisions[1])),
+										price: Number(takeProfitPrice25Perc.toFixed(precisions[0])),
+										stopPrice: Number(takeProfitPrice25Perc.toFixed(precisions[0])),
+										priceProtect: "TRUE",
+										timeInForce: "GTC",
+										reduceOnly: "true",
+									});
+
+									await client.submitNewOrder({
+										symbol: event.order.symbol,
+										side: takeProfitSide,
+										type: "TAKE_PROFIT",
+										quantity: Number((posAmount * 0.375).toFixed(precisions[1])),
+										price: Number(takeProfitPrice50Perc.toFixed(precisions[0])),
+										stopPrice: Number(takeProfitPrice50Perc.toFixed(precisions[0])),
+										priceProtect: "TRUE",
+										timeInForce: "GTC",
+										reduceOnly: "true",
+									});
+
 									await client.submitNewOrder({
 										symbol: event.order.symbol,
 										side: takeProfitSide,
@@ -232,11 +257,8 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 								event.order.orderStatus === "FILLED" &&
 								event.order.originalOrderType === "TAKE_PROFIT"
 							) {
-								const orderSide: OrderSide =
-									event.order.orderSide === "SELL" ? "BUY" : "SELL";
-
 								if (openOrders && !!openOrders.length) {
-									openOrders.map(async (order) => {
+									fileteredOrders.map(async (order) => {
 										await client
 											.cancelOrder({
 												symbol: event.order.symbol,
@@ -246,45 +268,13 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 											.catch((error) => console.log(error));
 									});
 								}
-								if (posPercentage > 17) {
-									await client.submitNewOrder({
-										symbol: event.order.symbol,
-										side: event.order.orderSide,
-										type: "STOP_MARKET",
-										stopPrice: Number(orderPrice.toFixed(precisions[0])),
-										timeInForce: "GTC",
-										closePosition: "true",
-									});
-								} else {
-									await client.submitNewOrder({
-										symbol: event.order.symbol,
-										side: orderSide,
-										type: "LIMIT",
-										quantity: Number(posAmount.toFixed(precisions[1])),
-										price: Number(orderPrice.toFixed(precisions[0])),
-										timeInForce: "GTC",
-									});
-								}
-								if (posPercentage > 10) {
-									await client.submitNewOrder({
-										symbol: event.order.symbol,
-										side: event.order.orderSide,
-										type: "TAKE_PROFIT",
-										quantity: Number((posAmount / 2).toFixed(precisions[1])),
-										price: Number(takeProfitPricePartial.toFixed(precisions[0])),
-										stopPrice: Number(takeProfitPricePartial.toFixed(precisions[0])),
-										priceProtect: "TRUE",
-										timeInForce: "GTC",
-										reduceOnly: "true",
-									});
-								}
+
 								await client.submitNewOrder({
 									symbol: event.order.symbol,
-									side: event.order.orderSide,
-									type: "TAKE_PROFIT_MARKET",
-									stopPrice: Number(takeProfitPrice.toFixed(precisions[0])),
-									closePosition: "true",
-									priceProtect: "TRUE",
+									side: orderSide,
+									type: "LIMIT",
+									quantity: Number(posAmount.toFixed(precisions[1])),
+									price: Number(orderPrice.toFixed(precisions[0])),
 									timeInForce: "GTC",
 								});
 							} else if (
@@ -294,7 +284,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 								const leverage = Number(position.leverage);
 								const lastFilledPrice = event.order.lastFilledPrice;
 								const quantity = Number(
-									(20 / (lastFilledPrice / leverage)).toFixed(precisions[1]),
+									(14 / (lastFilledPrice / leverage)).toFixed(precisions[1]),
 								);
 								const side: OrderSide =
 									event.order.orderSide === "SELL" ? "BUY" : "SELL";
