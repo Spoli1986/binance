@@ -148,19 +148,23 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 
 							const entryPrice: number = position ? Number(position.entryPrice) : 0;
 
-							const posAmount =
-								Number(position.positionAmt) > 0
+							const posAmount = position
+								? Number(position.positionAmt) > 0
 									? Number(position.positionAmt)
-									: -1 * Number(position.positionAmt);
-							const entryMargin = Number(position.isolatedWallet);
+									: -1 * Number(position.positionAmt)
+								: 0;
+							const entryMargin = position ? Number(position.isolatedWallet) : 0;
 							const takeProfitSide: OrderSide =
 								event.order.orderSide === "SELL" ? "BUY" : "SELL";
-							const takeProfitPrice: number =
-								(entryMargin * 0.5) / Number(position.positionAmt) + entryPrice;
-							const takeProfitPricePartial: number =
-								(entryMargin * 0.25) / Number(position.positionAmt) + entryPrice;
-							const orderPrice: number =
-								(entryMargin * -0.75) / Number(position.positionAmt) + entryPrice;
+							const takeProfitPrice: number = position
+								? (entryMargin * 0.5) / Number(position.positionAmt) + entryPrice
+								: 0;
+							const takeProfitPricePartial: number = position
+								? (entryMargin * 0.25) / Number(position.positionAmt) + entryPrice
+								: 0;
+							const orderPrice: number = position
+								? (entryMargin * -0.75) / Number(position.positionAmt) + entryPrice
+								: 0;
 							if (
 								event.order.orderStatus === "FILLED" &&
 								!event.order.isReduceOnly &&
