@@ -193,17 +193,6 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 										orderPrice,
 										position.leverage + "x",
 									);
-									if (openOrders && !!openOrders.length) {
-										openOrders.map(async (order) => {
-											await client
-												.cancelOrder({
-													symbol: event.order.symbol,
-													orderId: order.orderId,
-												})
-												.then((res) => res)
-												.catch((error) => console.log(error));
-										});
-									}
 									if (Number(position.isolatedWallet) > 40) {
 										await client.submitNewOrder({
 											symbol: event.order.symbol,
@@ -221,6 +210,22 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 											quantity: Number((posAmount / 2).toFixed(precisions[1])),
 											price: Number(orderPrice.toFixed(precisions[0])),
 											timeInForce: "GTC",
+										});
+									}
+									if (openOrders && !!openOrders.length) {
+										const takeProfitOrders: OrderResult[] = openOrders.filter(
+											(order: OrderResult) =>
+												order.origType === "TAKE_PROFIT_MARKET" ||
+												order.origType === "TAKE_PROFIT",
+										);
+										takeProfitOrders.map(async (order) => {
+											await client
+												.cancelOrder({
+													symbol: event.order.symbol,
+													orderId: order.orderId,
+												})
+												.then((res) => res)
+												.catch((error) => console.log(error));
 										});
 									}
 									await client.submitNewOrder({
@@ -252,7 +257,11 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 									event.order.orderSide === "SELL" ? "BUY" : "SELL";
 
 								if (openOrders && !!openOrders.length) {
-									openOrders.map(async (order) => {
+									const limitOrStopOrders: OrderResult[] = openOrders.filter(
+										(order: OrderResult) =>
+											order.origType === "LIMIT" || order.origType === "STOP_MARKET",
+									);
+									limitOrStopOrders.map(async (order) => {
 										await client
 											.cancelOrder({
 												symbol: event.order.symbol,
@@ -268,15 +277,6 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 									type: "LIMIT",
 									quantity: Number((posAmount / 2).toFixed(precisions[1])),
 									price: Number(orderPrice.toFixed(precisions[0])),
-									timeInForce: "GTC",
-								});
-								await client.submitNewOrder({
-									symbol: event.order.symbol,
-									side: event.order.orderSide,
-									type: "TAKE_PROFIT_MARKET",
-									stopPrice: Number(takeProfitPrice.toFixed(precisions[0])),
-									closePosition: "true",
-									priceProtect: "TRUE",
 									timeInForce: "GTC",
 								});
 							} else if (

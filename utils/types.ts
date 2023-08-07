@@ -4,3 +4,8 @@ export interface ResponseFuncs {
 	PUT?: Function;
 	DELETE?: Function;
 }
+
+export type TWsKey = {
+	owner: string;
+	wsKey: string;
+};

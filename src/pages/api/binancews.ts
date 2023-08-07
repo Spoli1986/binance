@@ -179,17 +179,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 										Number(orderPrice.toFixed(precisions[0])),
 										precisions,
 									);
-									if (openOrders && !!openOrders.length) {
-										openOrders.map(async (order) => {
-											await client
-												.cancelOrder({
-													symbol: event.order.symbol,
-													orderId: order.orderId,
-												})
-												.then((res) => res)
-												.catch((error) => console.log(error));
-										});
-									}
+
 									if (posPercentage > 17) {
 										await client.submitNewOrder({
 											symbol: event.order.symbol,
@@ -207,6 +197,23 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 											quantity: Number(posAmount.toFixed(precisions[1])),
 											price: Number(orderPrice.toFixed(precisions[0])),
 											timeInForce: "GTC",
+										});
+									}
+
+									if (openOrders && !!openOrders.length) {
+										const takeProfitOrders: OrderResult[] = openOrders.filter(
+											(order: OrderResult) =>
+												order.origType === "TAKE_PROFIT_MARKET" ||
+												order.origType === "TAKE_PROFIT",
+										);
+										takeProfitOrders.map(async (order) => {
+											await client
+												.cancelOrder({
+													symbol: event.order.symbol,
+													orderId: order.orderId,
+												})
+												.then((res) => res)
+												.catch((error) => console.log(error));
 										});
 									}
 									if (posPercentage > 10) {
@@ -240,7 +247,11 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 									event.order.orderSide === "SELL" ? "BUY" : "SELL";
 
 								if (openOrders && !!openOrders.length) {
-									openOrders.map(async (order) => {
+									const limitOrStopOrders: OrderResult[] = openOrders.filter(
+										(order: OrderResult) =>
+											order.origType === "LIMIT" || order.origType === "STOP_MARKET",
+									);
+									limitOrStopOrders.map(async (order) => {
 										await client
 											.cancelOrder({
 												symbol: event.order.symbol,
@@ -282,15 +293,6 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 										reduceOnly: "true",
 									});
 								}
-								await client.submitNewOrder({
-									symbol: event.order.symbol,
-									side: event.order.orderSide,
-									type: "TAKE_PROFIT_MARKET",
-									stopPrice: Number(takeProfitPrice.toFixed(precisions[0])),
-									closePosition: "true",
-									priceProtect: "TRUE",
-									timeInForce: "GTC",
-								});
 							} else if (
 								event.order.orderStatus === "FILLED" &&
 								event.order.originalOrderType === "TAKE_PROFIT_MARKET"
@@ -323,9 +325,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 					},
 				);
 
-				console.log("Setting up socket");
-
-				res.end();
+				console.log("Setting up socket Peti");
 			} else {
 				// Not Signed in
 				res.status(401).json({ message: "Reaalllyy???" });
