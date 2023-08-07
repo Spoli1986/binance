@@ -10,6 +10,7 @@ import {
 	USDMClient,
 	WebsocketClient,
 	WsUserDataEvents,
+	numberInString,
 } from "binance";
 import { getSession } from "next-auth/react";
 import axios from "axios";
@@ -297,7 +298,14 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 								event.order.orderStatus === "FILLED" &&
 								event.order.originalOrderType === "TAKE_PROFIT_MARKET"
 							) {
-								const leverage = Number(position.leverage);
+								const leverage: number = await client
+									.getPositions()
+									.then((res: FuturesPosition[]) => {
+										const leverage: numberInString = res.filter(
+											(res: FuturesPosition) => res.symbol === "APEUSDT",
+										)[0].leverage;
+										return Number(leverage);
+									});
 								const lastFilledPrice = event.order.lastFilledPrice;
 								const quantity = Number(
 									(20 / (lastFilledPrice / leverage)).toFixed(precisions[1]),
