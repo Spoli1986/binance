@@ -222,7 +222,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 											symbol: event.order.symbol,
 											side: takeProfitSide,
 											type: "TAKE_PROFIT",
-											quantity: Number(posAmount.toFixed(precisions[1])),
+											quantity: Number((posAmount / 2).toFixed(precisions[1])),
 											price: Number(takeProfitPricePartial.toFixed(precisions[0])),
 											stopPrice: Number(takeProfitPricePartial.toFixed(precisions[0])),
 											priceProtect: "TRUE",
