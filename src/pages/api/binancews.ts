@@ -195,7 +195,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 											symbol: event.order.symbol,
 											side: event.order.orderSide,
 											type: "LIMIT",
-											quantity: Number(posAmount.toFixed(precisions[1])),
+											quantity: Number((posAmount / 2).toFixed(precisions[1])),
 											price: Number(orderPrice.toFixed(precisions[0])),
 											timeInForce: "GTC",
 										});
