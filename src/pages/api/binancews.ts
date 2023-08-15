@@ -154,7 +154,9 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 									? Number(position.positionAmt)
 									: -1 * Number(position.positionAmt)
 								: 0;
+
 							const entryMargin = position ? Number(position.isolatedWallet) : 0;
+
 							const takeProfitSide: OrderSide =
 								event.order.orderSide === "SELL" ? "BUY" : "SELL";
 							const takeProfitPrice: number = position
@@ -294,40 +296,6 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 										reduceOnly: "true",
 									});
 								}
-							} else if (
-								event.order.orderStatus === "FILLED" &&
-								event.order.originalOrderType === "TAKE_PROFIT_MARKET"
-							) {
-								const leverage: number = await client
-									.getPositions()
-									.then((res: FuturesPosition[]) => {
-										const leverage: numberInString = res.filter(
-											(res: FuturesPosition) => res.symbol === "APEUSDT",
-										)[0].leverage;
-										return Number(leverage);
-									});
-								const lastFilledPrice = event.order.lastFilledPrice;
-								const quantity = Number(
-									(20 / (lastFilledPrice / leverage)).toFixed(precisions[1]),
-								);
-								const side: OrderSide =
-									event.order.orderSide === "SELL" ? "BUY" : "SELL";
-								if (!!openOrders)
-									openOrders.map(async (order) => {
-										await client
-											.cancelOrder({
-												symbol: event.order.symbol,
-												orderId: order.orderId,
-											})
-											.then((res) => res)
-											.catch((error) => console.log(error));
-									});
-								await client.submitNewOrder({
-									symbol: event.order.symbol,
-									side: side,
-									type: "MARKET",
-									quantity: quantity,
-								});
 							}
 						}
 					},

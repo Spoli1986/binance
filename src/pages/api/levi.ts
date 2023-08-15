@@ -140,15 +140,10 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 						console.log("LEVI:::: ", event);
 						if (event.eventType === "ORDER_TRADE_UPDATE") {
 							const position = await getPosition(event.order.symbol);
-							const balance = await getBalance(event.order.commissionAsset);
 							const openOrders: void | OrderResult[] = await getOpenOrders(
 								event.order.symbol,
 							);
 							const precisions = await exchangeInfo(event.order.symbol);
-
-							const posPercentage = position
-								? (Number(position.isolatedWallet) / Number(balance)) * 100
-								: 0;
 
 							const entryPrice: number = position ? Number(position.entryPrice) : 0;
 
@@ -280,47 +275,12 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 									price: Number(orderPrice.toFixed(precisions[0])),
 									timeInForce: "GTC",
 								});
-							} else if (
-								event.order.orderStatus === "FILLED" &&
-								event.order.originalOrderType === "TAKE_PROFIT_MARKET"
-							) {
-								const leverage: number = await client
-									.getPositions()
-									.then((res: FuturesPosition[]) => {
-										const leverage: numberInString = res.filter(
-											(res: FuturesPosition) => res.symbol === "APEUSDT",
-										)[0].leverage;
-										return Number(leverage);
-									});
-								const lastFilledPrice = event.order.lastFilledPrice;
-								const startMargin = 12;
-								const quantity = Number(
-									(startMargin / (lastFilledPrice / leverage)).toFixed(precisions[1]),
-								);
-								const side: OrderSide =
-									event.order.orderSide === "SELL" ? "BUY" : "SELL";
-								if (!!openOrders)
-									openOrders.map(async (order) => {
-										await client
-											.cancelOrder({
-												symbol: event.order.symbol,
-												orderId: order.orderId,
-											})
-											.then((res) => res)
-											.catch((error) => console.log(error));
-									});
-								await client.submitNewOrder({
-									symbol: event.order.symbol,
-									side: side,
-									type: "MARKET",
-									quantity: quantity,
-								});
 							}
 						}
 					},
 				);
 
-				console.log("Setting up socket");
+				console.log("Setting up socket Levi");
 
 				res.end();
 			} else {
