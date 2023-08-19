@@ -8,6 +8,7 @@ import EmailProvider from "next-auth/providers/email";
 import axios from "axios";
 import Admin from "../../../../model/Admin";
 import NextAuth from "next-auth";
+import User from "../../../../model/User";
 
 export default NextAuth({
 	providers: [
@@ -71,13 +72,21 @@ export default NextAuth({
 				);
 
 				if (recaptchaResponse.data.score > 0.5) {
-					if (!!credentials?.email) {
+					if (credentials?.role === "admin") {
 						const admin = await Admin.findOne({ email: credentials.email });
 						const isPasswordCorrect = await compare(
 							credentials!.password,
 							admin.password,
 						);
 						if (isPasswordCorrect) return admin;
+						else return { message: "not quite my tempo" };
+					} else {
+						const user = await User.findOne({ email: credentials?.email });
+						const isPasswordCorrect = await compare(
+							credentials!.password,
+							user.password,
+						);
+						if (isPasswordCorrect) return user;
 						else return { message: "not quite my tempo" };
 					}
 				}
@@ -93,7 +102,7 @@ export default NextAuth({
 		},
 		session: ({ session, token }) => {
 			if (token) {
-				session.user.isAdmin = token.isAdmin;
+				session.user.token = token;
 			}
 			return session; // The return type will match the one returned in `useSession()`
 		},

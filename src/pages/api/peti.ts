@@ -196,7 +196,20 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 											});
 										});
 									}
-
+									if (openOrders && !!openOrders.length) {
+										const tpOrders: OrderResult[] = openOrders.filter(
+											(order: OrderResult) => order.origType === "TAKE_PROFIT_MARKET",
+										);
+										tpOrders.map(async (order: OrderResult) => {
+											await client
+												.cancelOrder({
+													symbol: event.order.symbol,
+													orderId: order.orderId,
+												})
+												.then((res) => res)
+												.catch((error) => console.log(error));
+										});
+									}
 									await client.submitNewOrder({
 										symbol: event.order.symbol,
 										side: takeProfitSide,
@@ -207,7 +220,11 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 										timeInForce: "GTC",
 									});
 
-									if (openOrders && openOrders.length === 1) {
+									if (
+										openOrders &&
+										!openOrders.filter((order: OrderResult) => order.origType === "LIMIT")
+											.length
+									) {
 										await client.submitNewOrder({
 											symbol: event.order.symbol,
 											side: takeProfitSide,

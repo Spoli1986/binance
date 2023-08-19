@@ -3,6 +3,9 @@ import Router from "next/router";
 import { signIn, useSession } from "next-auth/react";
 import { useGoogleReCaptcha } from "react-google-recaptcha-v3";
 import { connect } from "../../utils/connection";
+import Image from "next/image";
+import Bitcoin from "../../public/assets/SL-0212121-40670-11.jpg";
+import Bg from "../../public/assets/U1c.gif";
 
 type UserData = {
 	email: string;
@@ -48,7 +51,7 @@ const Login = () => {
 			password: data.password,
 			recaptchaToken: gReCaptchaToken,
 			callbackUrl: `${window.location.origin}`,
-			role: data.email === "admin@patronpay.ch" ? "admin" : "",
+			role: data.email === "admin@spolarpeter.cc" ? "admin" : "",
 		})
 			.then((res) => {
 				if (res?.error) setEmailError(res.error);
@@ -58,50 +61,58 @@ const Login = () => {
 
 	return (
 		<div>
-			<div className="flex flex-col w-screen h-[85vh] align-middle justify-center">
-				<form
-					onSubmit={handleSubmitForm}
-					className="flex flex-col font-inter md:w-1/3 gap-7 self-center"
-				>
-					<h1 className="font-bold font-Raleway text-space_cadet text-5xl">Login</h1>
-					<div className="flex flex-col gap-4">
-						<div className="flex flex-col">
-							<label htmlFor="email" className="text-grey_web text-sm">
-								Email
-							</label>
-							<input
-								autoFocus
-								onChange={(e) => updateFields({ ...data, email: e.target.value })}
-								type="email"
-								name="email"
-								placeholder="Email"
-								className="text-onyx border border-[#B5B5B5] h-12 rounded p-2 outline-none"
-							/>
-						</div>
+			<div className="flex flex-col w-screen h-screen items-center justify-between relative">
+				<Image src={Bg} alt="Background" className="absolute h-screen w-screen" />
 
-						<div className="flex flex-col">
-							<label htmlFor="password" className="text-grey_web text-sm">
-								Password
-							</label>
-							<input
-								autoFocus
-								onChange={(e) => updateFields({ ...data, password: e.target.value })}
-								type="password"
-								name="password"
-								placeholder="Password"
-								required
-								className="text-onyx border border-[#B5B5B5] h-12 rounded p-2 outline-none content-['*']"
-							/>
+				{session.status === "loading" && (
+					<Image src={Bitcoin} alt="BTC Spinner" className="w-7 animate-spin" />
+				)}
+				{session.status === "unauthenticated" && (
+					<form
+						onSubmit={handleSubmitForm}
+						className="flex flex-col font-inter w-3/4 md:w-[450px] gap-7 absolute top-1/3"
+					>
+						<div className="flex flex-col gap-4 bg-slate-100/30 p-4 rounded-md">
+							<div className="flex flex-col">
+								<label htmlFor="email" className="text-white text-sm">
+									Email
+								</label>
+								<input
+									autoFocus
+									onChange={(e) => updateFields({ ...data, email: e.target.value })}
+									type="email"
+									name="email"
+									placeholder="Email"
+									className="text-onyx border border-[#B5B5B5] h-12 rounded p-2 outline-none"
+								/>
+							</div>
+
+							<div className="flex flex-col">
+								<label htmlFor="password" className="text-white text-sm">
+									Password
+								</label>
+								<input
+									autoFocus
+									onChange={(e) => updateFields({ ...data, password: e.target.value })}
+									type="password"
+									name="password"
+									placeholder="Password"
+									required
+									className="text-onyx border border-[#B5B5B5] h-12 rounded p-2 outline-none content-['*']"
+								/>
+							</div>
+							<button role="button" className="text-white">
+								Submit
+							</button>
+							{passwordError ||
+								(emailError && (
+									<div className="text-error_background">{passwordError}</div>
+								))}
 						</div>
-						<button role="button">Submit</button>
-						{passwordError ||
-							(emailError && (
-								<div className="text-error_background">{passwordError}</div>
-							))}
-					</div>
-				</form>
-				<div className="self-center text-silver text-sm mt-10">
-					This site is protected by reCAPTCHA and the Google if you&apos;re a robot,
+					</form>
+				)}
+				<div className=" text-white text-sm mt-10 absolute bottom-2">
+					This site is protected by reCAPTCHA and the Google. If you&apos;re a robot,
 					or do not own this site, just fuck off!!!
 				</div>
 			</div>

@@ -9,3 +9,9 @@ export type TWsKey = {
 	owner: string;
 	wsKey: string;
 };
+
+export type TUser = {
+	email: string;
+	password: string;
+	confirmed: boolean;
+};
