@@ -28,6 +28,13 @@ export default function Starter({}: Props) {
 			console.log(error);
 		}
 	};
+	const startWebSocketKPeti = async () => {
+		try {
+			await axios.get("/api/peti");
+		} catch (error) {
+			console.log(error);
+		}
+	};
 
 	return (
 		<div className="h-[90vh] w-full border bg-blue-400 flex flex-col items-center">
@@ -49,6 +56,12 @@ export default function Starter({}: Props) {
 					className="text-3xl text-green-500 py-2 px-4 border border-green-500 rounded-md hover:bg-green-500 hover:text-white font-bold my-10 transition-colors duration-200"
 				>
 					Start Roli
+				</button>
+				<button
+					onClick={startWebSocketKPeti}
+					className="text-3xl text-green-500 py-2 px-4 border border-green-500 rounded-md hover:bg-green-500 hover:text-white font-bold my-10 transition-colors duration-200"
+				>
+					Start K Peti
 				</button>
 			</div>
 		</div>
