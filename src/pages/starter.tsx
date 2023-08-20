@@ -7,7 +7,7 @@ type Props = {};
 export default function Starter({}: Props) {
 	const startWebSocketPeti = async () => {
 		try {
-			await axios.get("/api/binancews");
+			await axios.get("/api/peti");
 		} catch (error) {
 			console.log(error);
 		}
@@ -30,7 +30,7 @@ export default function Starter({}: Props) {
 	};
 	const startWebSocketKPeti = async () => {
 		try {
-			await axios.get("/api/peti");
+			await axios.get("/api/kpeti");
 		} catch (error) {
 			console.log(error);
 		}

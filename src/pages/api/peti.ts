@@ -200,6 +200,16 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 										const tpOrders: OrderResult[] = openOrders.filter(
 											(order: OrderResult) => order.origType === "TAKE_PROFIT_MARKET",
 										);
+										if (openOrders.length === 1 && tpOrders.length === 1) {
+											await client.submitNewOrder({
+												symbol: event.order.symbol,
+												side: takeProfitSide,
+												type: "STOP_MARKET",
+												stopPrice: Number(stopLossPrice.toFixed(precisions[0])),
+												timeInForce: "GTC",
+												closePosition: "true",
+											});
+										}
 										tpOrders.map(async (order: OrderResult) => {
 											await client
 												.cancelOrder({
@@ -219,21 +229,6 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 										priceProtect: "TRUE",
 										timeInForce: "GTC",
 									});
-
-									if (
-										openOrders &&
-										!openOrders.filter((order: OrderResult) => order.origType === "LIMIT")
-											.length
-									) {
-										await client.submitNewOrder({
-											symbol: event.order.symbol,
-											side: takeProfitSide,
-											type: "STOP_MARKET",
-											stopPrice: Number(stopLossPrice.toFixed(precisions[0])),
-											timeInForce: "GTC",
-											closePosition: "true",
-										});
-									}
 								}
 							} else if (
 								event.order.orderStatus === "FILLED" &&
