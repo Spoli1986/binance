@@ -5,13 +5,16 @@ export interface ResponseFuncs {
 	DELETE?: Function;
 }
 
-export type TWsKey = {
-	owner: string;
-	wsKey: string;
-};
+export interface Strategies {
+	[key: string]: string[]; // This index signature allows any string key to be used to access string values
+}
 
 export type TUser = {
+	_id: string;
 	email: string;
 	password: string;
 	confirmed: boolean;
+	strategies: Strategies;
+	wsKey: string;
+	role: string;
 };

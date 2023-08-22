@@ -1,8 +1,12 @@
 import Image from "next/image";
 import Bg from "../../public/assets/3Kxn.gif";
 import Router from "next/router";
+import { useSession } from "next-auth/react";
 
 export default function Home() {
+	const session = useSession();
+
+	if (session.status === "authenticated") Router.push("/home");
 	return (
 		<div className="flex flex-col items-center justify-center w-screen">
 			<Image src={Bg} alt="Background" className="w-screen h-screen" />

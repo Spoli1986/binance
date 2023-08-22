@@ -70,3 +70,29 @@ export const useValidator = () => {
 
 	return { nameValidator, emailValidator, passwordValidator };
 };
+
+export async function useExchangeInfo(symbol: string) {
+	const precisions = await axios
+		.get("https://fapi.binance.com/fapi/v1/exchangeInfo")
+		.then((res) => {
+			const symbolInfoArray = res.data.symbols.filter(
+				(sym: any) => sym.symbol === symbol,
+			);
+			const tickSize =
+				symbolInfoArray[0]["filters"]
+					.filter((filter: any) => filter.filterType === "PRICE_FILTER")[0]
+					.tickSize.split(".")
+					.pop()
+					.indexOf("1") + 1;
+			const stepSize = symbolInfoArray[0]["filters"].filter(
+				(filter: any) => filter.filterType === "LOT_SIZE",
+			)[0];
+
+			const place =
+				Number(stepSize.stepSize) < 1
+					? stepSize.stepSize.split(".").pop().indexOf("1") + 1
+					: 0;
+			return [tickSize, place];
+		});
+	return precisions;
+}

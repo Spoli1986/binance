@@ -18,6 +18,9 @@ import {
 import { ReactNode, useEffect, useState } from "react";
 import axios from "axios";
 import MainLayout from "../../layouts/mainLayout";
+import { useExchangeInfo } from "../../utils/commonFunctions";
+import { useSession } from "next-auth/react";
+import Loading from "../../components/Loading";
 
 const inter = Inter({ subsets: ["latin"] });
 type Balances = {
@@ -68,32 +71,18 @@ type MarkPriceType = Array<SymbolPriceType>;
 const ORDER_DATA: OrderResult[] = [];
 export default function Positions() {
 	const [error, setError] = useState();
+	const [loading, setLoading] = useState<boolean>(false);
 	const [balance, setBalance] = useState<Balances>(INITIAL_DATA);
 	const [openorder, setOpenOrder] = useState(ORDER_DATA);
-	const [symbol, setSymbol] = useState<string>("");
-	const [price, SetPrice] = useState<number>();
-	const [side, setSide] = useState<OrderSide>("BUY");
-	const [type, setType] = useState<FuturesOrderType>("LIMIT");
-	const [quantity, setQuantity] = useState<number>(0);
-	const [exchangeInfo, setExchangeInfo] = useState<any>();
-
-	const [markPrice, setMarkPrice] = useState<SymbolPriceType[]>([]);
 	const [selectedOrders, setSelectedOrders] = useState<number[]>([]);
 	const [positions, setPositions] = useState<FuturesPosition[]>([]);
 	const [allSymbols, setAllSymbols] = useState<string[]>([]);
-	const [incomeHistory, setIncomeHistory] = useState<IncomeHistory[]>([]);
-	const [accountTrades, setAccountTrades] = useState<FuturesPositionTrade[]>([]);
-	const handleToggle = (orderId: number) => {
-		if (selectedOrders.includes(orderId)) {
-			setSelectedOrders(selectedOrders.filter((id) => id !== orderId));
-		} else {
-			setSelectedOrders([...selectedOrders, orderId]);
-		}
-	};
 
+	const session = useSession();
+	const userId = session.data?.user.id;
 	useEffect(() => {
 		startPriceSocket();
-		// axiosExchangeInfo("APEUSDT");
+		setLoading(true);
 	}, []);
 	const startPriceSocket = async () => {
 		const {
@@ -102,7 +91,7 @@ export default function Positions() {
 			allOrders,
 			takeProfitOrders,
 			exchangeInfo,
-		}: DataProps = (await axios.get("/api/getuserdatastream")).data;
+		}: DataProps = (await axios.post("/api/getuserdatastream", { userId })).data;
 		setBalance({
 			busdBalance: allAssetBalances.filter((asset) => asset.asset === "BUSD"),
 			usdtBalance: allAssetBalances.filter((asset) => asset.asset === "USDT"),
@@ -110,260 +99,161 @@ export default function Positions() {
 		setOpenOrder(allOrders);
 		setAllSymbols(takeProfitOrders.mySymbols);
 		setPositions(takeProfitOrders.myPositions);
-		// setExchangeInfo(exchangeInfo);
-	};
-	const axiosExchangeInfo = async (symbol: string) => {
-		const precisions = await axios
-			.get("https://fapi.binance.com/fapi/v1/exchangeInfo")
-			.then((res) => {
-				const symbolInfoArray = res.data.symbols.filter(
-					(sym: any) => sym.symbol === symbol,
-				);
-				console.log(symbolInfoArray);
-				const tickSize =
-					symbolInfoArray[0]["filters"]
-						.filter((filter: any) => filter.filterType === "PRICE_FILTER")[0]
-						.tickSize.split(".")
-						.pop()
-						.indexOf("1") + 1;
-				const stepSize = symbolInfoArray[0]["filters"].filter(
-					(filter: any) => filter.filterType === "LOT_SIZE",
-				)[0];
-
-				const place =
-					Number(stepSize.stepSize) < 1
-						? stepSize.stepSize.split(".").pop().indexOf("1") + 1
-						: 0;
-				return [tickSize, place];
-			});
-		setExchangeInfo(precisions);
-	};
-
-	const startWebSocket = async () => {
-		try {
-			// await axios.get("/api/levi");
-			await axios.get("/api/binancews");
-		} catch (error) {
-			console.log(error);
-		}
+		setLoading(false);
 	};
 
 	return (
-		<div className="flex flex-col items-center justify-center w-screen">
-			<h1 className="text-3xl text-blue-800 font-bold underline my-10">Wallet</h1>
-			<table className="p-10 text-green-400 text-2xl">
-				<thead className="pr-2">
-					<tr className=" items-start">
-						<th className="text-start">Total free</th>
-						<th className="text-start">USDT</th>
-						<th className="text-start">BUSD</th>
-					</tr>
-				</thead>
-				<tbody>
-					<tr className="">
-						<td className="pr-2">
-							{Number(balance.usdtBalance[0]?.availableBalance) +
-								Number(balance.busdBalance[0]?.availableBalance)}
-						</td>
+		<div className="w-full overflow-x-auto min-h-[calc(100vh-250px)] flex flex-col items-center justify-center bg-gradient-to-b from-gray-900 via-purple-900 to-violet-900">
+			{session.status === "authenticated" && (
+				<>
+					{loading ? (
+						<Loading />
+					) : (
+						<>
+							<h1 className="text-3xl text-violet-500 font-bold underline my-10">
+								Wallet
+							</h1>
+							<table className="p-10 text-green-400 text-2xl border border-white bg-blue-400/10">
+								<thead className="pr-2">
+									<tr className=" items-start">
+										<th className="text-center w-52">Total free</th>
+										<th className="text-center w-52">USDT</th>
+										<th className="text-center w-52">BUSD</th>
+									</tr>
+								</thead>
+								<tbody>
+									<tr className="text-center">
+										<td className="pr-2 ">
+											{(
+												Number(balance.usdtBalance[0]?.availableBalance) +
+												Number(balance.busdBalance[0]?.availableBalance)
+											).toFixed(2)}
+										</td>
 
-						<td className="pr-2">{balance.usdtBalance[0]?.availableBalance}</td>
+										<td className="pr-2">
+											{Number(balance.usdtBalance[0]?.availableBalance).toFixed(2)}
+										</td>
 
-						<td className="pr-2">{balance.busdBalance[0]?.availableBalance}</td>
-					</tr>
-				</tbody>
-			</table>
-			<div></div>
-			<h1 className="text-3xl text-blue-800 font-bold underline my-10">
-				Open Orders
-			</h1>
-			<div className="w-screen">
-				{/* {openorder.map((order) => {
-					return (
-						<div key={order.orderId}>
-							<div>{order.side}:</div>
-							<div>
-								{order.origQty}
-								{order.symbol}@{order.price}
-							</div>
-						</div>
-					);
-				})} */}
-				<table className="w-full">
-					<thead className="border-b-4 border-blue-400">
-						<tr className=" items-start">
-							<th className="text-start">Side</th>
-							<th className="text-start">Type</th>
-							<th className="text-start">Symbol</th>
-							<th className="text-start">Amount $</th>
-							<th className="text-start">Price</th>
-							<th className="text-start">Profit</th>
-							<th className="text-start">Action</th>
-						</tr>
-					</thead>
-					<tbody className="bg-slate-100 ">
-						{openorder.map((order) => (
-							<tr key={order.orderId} className="even:bg-white">
-								<td>{order.side}</td>
-								<td>
-									{order.origType === "TAKE_PROFIT_MARKET"
-										? "TAKE PROFIT"
-										: "LIMIT ORDER"}
-								</td>
-								<td>{order.symbol}</td>
-								<td>
-									{order.origType === "LIMIT"
-										? ((Number(order.origQty) * Number(order.price)) / 10).toFixed(2)
-										: "CLOSE POSITION"}
-								</td>
-								<td>{!!order.price ? order.price : order.stopPrice}</td>
-								<td>{!!order.stopPrice ? order.price : order.stopPrice}</td>
-								<td>
-									<button onClick={() => handleToggle(order.orderId)}>
-										{selectedOrders.includes(order.orderId) ? "Hide" : "Show"}
-									</button>
-								</td>
-							</tr>
-						))}
-					</tbody>
-				</table>
-			</div>
-			<h1 className="text-3xl text-blue-800 font-bold underline my-10">
-				Open Positions
-			</h1>
-			<div className="overflow-scroll w-full">
-				<table className="w-full">
-					<thead className="border-b-4 border-blue-400 w-full">
-						<tr className="items-start w-full">
-							<th className="text-start">Side</th>
-							<th className="text-start">Symbol</th>
-							<th className="text-start">Open Since</th>
-							<th className="text-start">Leverage</th>
-							<th className="text-start">Entry Price</th>
-							<th className="text-start">Liquid. Price</th>
-							<th className="text-start">Margin Type</th>
-							<th className="text-start">Market Price</th>
-							<th className="text-start">Margin</th>
-							<th className="text-start">Unrzld Profit</th>
-						</tr>
-					</thead>
-					<tbody className="bg-slate-100">
-						{positions.map((pos, index) => (
-							<tr key={index} className="even:bg-white">
-								<td>{Number(pos.notional) < 0 ? "SHORT" : "LONG"}</td>
-								<td>{pos.symbol}</td>
-								<td>{new Date(pos.updateTime).toLocaleDateString()}</td>
-								<td>{pos.leverage}</td>
-								<td>{Number(pos.entryPrice).toFixed(3)}</td>
-								<td>{Number(pos.liquidationPrice).toFixed(3)}</td>
-								<td>{pos.marginType}</td>
-								<td>{Number(pos.markPrice).toFixed(3)}</td>
-								<td>{Number(pos.isolatedWallet).toFixed(3)}</td>
-								<td>
-									{Number(pos.unRealizedProfit).toFixed(3)} /{" "}
-									{(
-										(Number(pos.unRealizedProfit) / Number(pos.isolatedWallet)) *
-										100
-									).toFixed(3)}
-									%
-								</td>
-								{/* <td>
-									<button onClick={() => handleToggle()}>
-										{selectedOrders.includes(pos.orderId) ? "Hide" : "Show"}
-									</button>
-								</td> */}
-							</tr>
-						))}
-					</tbody>
-				</table>
-			</div>
-			<button
-				onClick={startWebSocket}
-				className="text-3xl text-red-500 py-2 px-4 border border-red-500 rounded-md hover:bg-red-500 hover:text-white font-bold my-10 transition-colors duration-200"
-			>
-				Start
-			</button>
-			<h1 className="text-3xl text-blue-800 font-bold underline my-10">
-				New Order
-			</h1>
-			<form className="flex flex-col gap-3 w-2/5 text-black bg-slate-100 border border-slate-200 p-2 mb-10 rounded-md">
-				<div className="flex flex-col p-1">
-					<label htmlFor="symbol" className="text-gray-400 p-1">
-						Symbol
-					</label>
-					<input
-						type="text"
-						placeholder="symbol"
-						onChange={(e) => setSymbol(e.target.value)}
-						className="h-10 rounded-md outline-none p-1 text-gray-600"
-					/>
-				</div>
-				<div className="flex flex-col p-1">
-					<label htmlFor="symbol" className="text-gray-400 p-1">
-						Side
-					</label>
-					<select
-						placeholder="side"
-						onChange={(e) => console.log(e.target.value)}
-						defaultValue={side}
-						className="h-10 rounded-md outline-none p-1 text-gray-600"
-					>
-						<option value="BUY">BUY</option>
-						<option value="SELL">SELL</option>
-					</select>
-				</div>
-				<div className="flex flex-col p-1">
-					<label htmlFor="symbol" className="text-gray-400 p-1">
-						Type
-					</label>
-					<select
-						name="type"
-						id="2"
-						placeholder="type"
-						onChange={(e) => {
-							setType(e.target.value as FuturesOrderType);
-						}}
-						className="h-10 rounded-md outline-none p-1 text-gray-600"
-					>
-						<option value="LIMIT">LIMIT</option>
-						<option value="MARKET">MARKET</option>
-						<option value="STOP">STOP</option>
-						<option value="STOP_MARKET">STOP_MARKET</option>
-						<option value="TAKE_PROFIT">TAKE_PROFIT</option>
-						<option value="TAKE_PROFIT_MARKET">TAKE_PROFIT_MARKET</option>
-						<option value="TRAILING_STOP_MARKET">TRAILING_STOP_MARKET</option>
-					</select>
-				</div>
-				<div className="flex flex-col p-1">
-					<label htmlFor="symbol" className="text-gray-400 p-1">
-						Price
-					</label>
-
-					<input
-						type="number"
-						placeholder="price"
-						onChange={(e) => SetPrice(Number(e.target.value))}
-						className="h-10 rounded-md outline-none p-1 text-gray-600"
-					/>
-				</div>
-				<div className="flex flex-col p-1">
-					<label htmlFor="symbol" className="text-gray-400 p-1">
-						Quantity
-					</label>
-
-					<input
-						type="string"
-						placeholder="quantity"
-						onChange={(e) => setQuantity(Number(e.target.value))}
-						className="h-10 rounded-md outline-none p-1 text-gray-600"
-					/>
-				</div>
-
-				<input
-					type="submit"
-					title="submit"
-					className="bg-white cursor-pointer w-max p-2 self-center rounded-lg hover:bg-green-600 hover:text-white active:bg-blue-600 active:text-white"
-				/>
-			</form>
+										<td className="pr-2">
+											{Number(balance.busdBalance[0]?.availableBalance).toFixed(2)}
+										</td>
+									</tr>
+								</tbody>
+							</table>
+							<h1 className="text-3xl text-violet-500 font-bold underline my-10">
+								Open Orders
+							</h1>
+							{openorder.length ? (
+								<div className="w-screen">
+									<div className="overflow-x-auto">
+										<table className="w-full">
+											<thead className="border-b-4 border-blue-400 text-white bg-gradient-to-r from-purple-800 via-violet-900 to-purple-800">
+												<tr className="items-start">
+													<th className="py-3 pl-4 text-start">Side</th>
+													<th className="py-3 pl-4 text-start">Type</th>
+													<th className="py-3 pl-4 text-start">Symbol</th>
+													<th className="py-3 pl-4 text-start">Amount $</th>
+													<th className="py-3 pl-4 text-start">Price</th>
+													<th className="py-3 pl-4 text-start">Profit</th>
+												</tr>
+											</thead>
+											<tbody className=" bg-gray-100 divide-y divide-gray-300">
+												{openorder.map((order, index) => (
+													<>
+														<tr
+															key={order.orderId}
+															className={`${
+																order.side === "SELL" ? "bg-red-500/75" : "bg-green-500/75"
+															}`}
+														>
+															<td className="py-2 pl-4">{order.side}</td>
+															<td className="py-2 pl-4">
+																{order.origType === "TAKE_PROFIT_MARKET"
+																	? "TAKE PROFIT"
+																	: "LIMIT ORDER"}
+															</td>
+															<td className="py-2 pl-4">{order.symbol}</td>
+															<td className="py-2 pl-4">
+																{order.origType === "LIMIT"
+																	? ((Number(order.origQty) * Number(order.price)) / 10).toFixed(
+																			2,
+																	  )
+																	: "CLOSE POSITION"}
+															</td>
+															<td className="py-2 pl-4">{order.price || order.stopPrice}</td>
+															<td className="py-2 pl-4">{order.stopPrice || order.price}</td>
+														</tr>
+														{index < openorder.length - 1 && (
+															<tr className="h-2 bg-white/80"></tr>
+														)}
+													</>
+												))}
+											</tbody>
+										</table>
+									</div>
+								</div>
+							) : (
+								<div className="text-slate-400">No open orders</div>
+							)}
+							<h1 className="text-3xl text-violet-500 font-bold underline my-10">
+								Open Positions
+							</h1>
+							{positions.length ? (
+								<div className="overflow-scroll w-full">
+									<table className="w-full">
+										<thead className="border-b-4 border-blue-400 w-full text-white bg-gradient-to-r from-purple-800 via-violet-900 to-purple-800">
+											<tr className="items-start w-full">
+												<th className="text-start">Side</th>
+												<th className="text-start">Symbol</th>
+												<th className="text-start">Open Since</th>
+												<th className="text-start">Leverage</th>
+												<th className="text-start">Entry Price</th>
+												<th className="text-start">Liquid. Price</th>
+												<th className="text-start">Margin Type</th>
+												<th className="text-start">Market Price</th>
+												<th className="text-start">Margin</th>
+												<th className="text-start">Unrzld Profit</th>
+											</tr>
+										</thead>
+										<tbody className="bg-slate-100">
+											{positions.map((pos, index) => (
+												<tr
+													key={index}
+													className={`${
+														Number(pos.unRealizedProfit) > 0
+															? "bg-red-500/75"
+															: "bg-green-500/75"
+													}`}
+												>
+													<td>{Number(pos.notional) < 0 ? "SHORT" : "LONG"}</td>
+													<td>{pos.symbol}</td>
+													<td>{new Date(pos.updateTime).toLocaleDateString()}</td>
+													<td>{pos.leverage}</td>
+													<td>{Number(pos.entryPrice).toFixed(3)}</td>
+													<td>{Number(pos.liquidationPrice).toFixed(3)}</td>
+													<td>{pos.marginType}</td>
+													<td>{Number(pos.markPrice).toFixed(3)}</td>
+													<td>{Number(pos.isolatedWallet).toFixed(3)}</td>
+													<td>
+														{Number(pos.unRealizedProfit).toFixed(3)} /{" "}
+														{(
+															(Number(pos.unRealizedProfit) / Number(pos.isolatedWallet)) *
+															100
+														).toFixed(3)}
+														%
+													</td>
+												</tr>
+											))}
+										</tbody>
+									</table>
+								</div>
+							) : (
+								<div className="text-slate-400">No open positions</div>
+							)}
+						</>
+					)}
+				</>
+			)}
 		</div>
 	);
 }

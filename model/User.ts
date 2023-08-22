@@ -14,6 +14,15 @@ const userSchema = new Schema({
 	confirmed: {
 		type: "boolean",
 	},
+	wsKey: {
+		type: "string",
+	},
+	strategies: {
+		type: "object",
+	},
+	role: {
+		type: "string",
+	},
 });
 const User = mongoose.models.User || mongoose.model("User", userSchema);
 export default User;

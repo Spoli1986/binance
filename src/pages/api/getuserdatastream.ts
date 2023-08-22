@@ -10,11 +10,12 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 	const method: keyof ResponseFuncs = req.method as keyof ResponseFuncs;
 
 	const handleCase: ResponseFuncs = {
-		GET: async (req: NextApiRequest, res: NextApiResponse) => {
+		POST: async (req: NextApiRequest, res: NextApiResponse) => {
+			const userId = req.body.userId;
 			const session = await getSession({ req });
 			if (session) {
-				const API_KEY = process.env.NEXT_PUBLIC_BINANCE_KEY;
-				const API_SECRET = process.env.NEXT_PUBLIC_BINANCE_SECRET;
+				const API_KEY = process.env[`NEXT_PUBLIC_BINANCE_KEY_${userId}`];
+				const API_SECRET = process.env[`NEXT_PUBLIC_BINANCE_SECRET_${userId}`];
 
 				const ignoredSillyLogMsgs = [
 					"Sending ping",
@@ -45,43 +46,9 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 				const allAssetBalances = await client
 					.getBalance()
 					.then((res) => {
-						// const positionAssetBalance: FuturesAccountBalance[] = res.filter(
-						// 	(asset: FuturesAccountBalance) =>
-						// 		asset.asset === "BUSD" || asset.asset === "USDT",
-						// );
-						// return positionAssetBalance;
 						return res;
 					})
 					.catch((err) => console.log(err));
-
-				// const makeOrder = async (e: any) => {
-				//     e.preventDefault();
-				//     console.log(symbol, side, type, quantity, price);
-				//     try {
-				//         const response = await client.submitNewOrder({
-				//             symbol,
-				//             side,
-				//             type,
-				//             quantity,
-				//             price,
-				//             timeInForce: "GTC",
-				//         });
-				//         console.log(response);
-				//     } catch (error) {
-				//         console.log(error);
-				//     }
-				// };
-				// const closeOrder = async (e: any) => {
-				//     e.preventDefault();
-				//     try {
-				//         const response = await client.cancelOrder({
-				//             symbol,
-				//         });
-				//     } catch (error) {}
-				// };
-				// async function saveBalance() {
-
-				// }
 
 				const takeProfitOrders = await client.getPositions().then((result) => {
 					const myPositions = result.filter((val) => val.entryPrice !== "0.0");
@@ -89,7 +56,9 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 					return { myPositions, mySymbols };
 				});
 
-				res.status(200).json({ allAssetBalances, allOrders, takeProfitOrders });
+				return res
+					.status(200)
+					.json({ allAssetBalances, allOrders, takeProfitOrders });
 			} else {
 				// Not Signed in
 				res.status(401).json({ message: "Reaalllyy???" });

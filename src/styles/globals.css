@@ -2,6 +2,15 @@
 @tailwind components;
 @tailwind utilities;
 
+.rotated {
+	animation: rotateY 2s linear infinite;
+}
+@keyframes rotateY {
+	to {
+		transform: rotateY(360deg);
+	}
+}
+
 .grecaptcha-badge {
 	visibility: hidden;
 }
