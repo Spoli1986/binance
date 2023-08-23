@@ -46,9 +46,30 @@ export default function LongMenu() {
 				open={open}
 				onClose={handleClose}
 			>
-				<MenuItem onClick={() => Router.push("/home")}>Home</MenuItem>
-				<MenuItem onClick={() => Router.push("/positions")}>Positions</MenuItem>
-				<MenuItem onClick={() => Router.push("/strategies")}>Strategies</MenuItem>
+				<MenuItem
+					onClick={() => {
+						Router.push("/home");
+						handleClose();
+					}}
+				>
+					Home
+				</MenuItem>
+				<MenuItem
+					onClick={() => {
+						Router.push("/positions");
+						handleClose();
+					}}
+				>
+					Positions
+				</MenuItem>
+				<MenuItem
+					onClick={() => {
+						Router.push("/strategies");
+						handleClose();
+					}}
+				>
+					Strategies
+				</MenuItem>
 				<MenuItem onClick={signout}>Logout</MenuItem>
 			</Menu>
 		</div>

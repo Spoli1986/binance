@@ -30,7 +30,19 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 				});
 			}
 
-			await User.create({ ...req.body, password: hashedPassword });
+			await User.create({
+				...req.body,
+				password: hashedPassword,
+				confirmed: false,
+				strategies: {
+					fournhalf: [],
+					avalancheorrocket: [],
+					threefiftyeighty: [],
+					fiftyfifty: [],
+					maxforty: [],
+					fiftyeighty: [],
+				},
+			});
 			return res.status(200).json({
 				message: "Thank you for the registration, please check your email!",
 				status: "success",

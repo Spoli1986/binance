@@ -14,7 +14,10 @@ export default function FourNHalf() {
 					<thead>
 						<tr>
 							<th className="border p-3"></th>
-							<th className="border p-3">Price Distance Percentage</th>
+							<th className="border p-3 text-center">
+								Price Distance Percentage <br />{" "}
+								<span className="text-sm">(From initial entry)</span>
+							</th>
 							<th className="border p-3">Buy In Multiplier</th>
 						</tr>
 					</thead>

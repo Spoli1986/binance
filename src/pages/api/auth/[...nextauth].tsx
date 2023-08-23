@@ -68,11 +68,14 @@ export default NextAuth({
 
 				if (recaptchaResponse.data.score > 0.5) {
 					const user = await User.findOne({ email: credentials?.email });
+					if (!user) throw new Error("You've not even registered, bitch...");
 					const isPasswordCorrect = await compare(
 						credentials!.password,
 						user.password,
 					);
-
+					if (!isPasswordCorrect)
+						throw new Error("Remember your credentials, bitch...");
+					if (!user.confirmed) throw new Error("Just wait for your turn...");
 					if (isPasswordCorrect && user.confirmed) return user;
 					else throw new Error("not quite my tempo");
 				}

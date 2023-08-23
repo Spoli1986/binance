@@ -21,11 +21,17 @@ import MainLayout from "../../layouts/mainLayout";
 import { useExchangeInfo } from "../../utils/commonFunctions";
 import { useSession } from "next-auth/react";
 import Loading from "../../components/Loading";
+import React from "react";
 
 const inter = Inter({ subsets: ["latin"] });
 type Balances = {
 	usdtBalance: FuturesAccountBalance[];
 	busdBalance: FuturesAccountBalance[];
+};
+
+type AError = {
+	status: number;
+	message: string;
 };
 
 type FilterType = {
@@ -70,7 +76,7 @@ type SymbolPriceType = {
 type MarkPriceType = Array<SymbolPriceType>;
 const ORDER_DATA: OrderResult[] = [];
 export default function Positions() {
-	const [error, setError] = useState();
+	const [error, setError] = useState<AError>();
 	const [loading, setLoading] = useState<boolean>(false);
 	const [balance, setBalance] = useState<Balances>(INITIAL_DATA);
 	const [openorder, setOpenOrder] = useState(ORDER_DATA);
@@ -85,21 +91,30 @@ export default function Positions() {
 		setLoading(true);
 	}, []);
 	const startPriceSocket = async () => {
-		const {
-			positions,
-			allAssetBalances,
-			allOrders,
-			takeProfitOrders,
-			exchangeInfo,
-		}: DataProps = (await axios.post("/api/getuserdatastream", { userId })).data;
-		setBalance({
-			busdBalance: allAssetBalances.filter((asset) => asset.asset === "BUSD"),
-			usdtBalance: allAssetBalances.filter((asset) => asset.asset === "USDT"),
-		});
-		setOpenOrder(allOrders);
-		setAllSymbols(takeProfitOrders.mySymbols);
-		setPositions(takeProfitOrders.myPositions);
-		setLoading(false);
+		try {
+			const {
+				positions,
+				allAssetBalances,
+				allOrders,
+				takeProfitOrders,
+				exchangeInfo,
+			}: DataProps = (await axios.post("/api/getuserdatastream", { userId })).data;
+
+			setBalance({
+				busdBalance: allAssetBalances.filter((asset) => asset.asset === "BUSD"),
+				usdtBalance: allAssetBalances.filter((asset) => asset.asset === "USDT"),
+			});
+			setOpenOrder(allOrders);
+			setAllSymbols(takeProfitOrders.mySymbols);
+			setPositions(takeProfitOrders.myPositions);
+			setLoading(false);
+		} catch (error: any) {
+			console.log(error);
+			setError({
+				status: error.response.status,
+				message: error.response.statusText,
+			});
+		}
 	};
 
 	return (
@@ -107,7 +122,19 @@ export default function Positions() {
 			{session.status === "authenticated" && (
 				<>
 					{loading ? (
-						<Loading />
+						<>
+							<Loading />
+							{error && (
+								<div className="text-center text-2xl text-red-500 p-2 bg-red-100 animate-pulse rounded absolute">
+									{error.message === "Bad Request" && (
+										<p>
+											Wrong API Key or Secret Key! <br />
+											Contact the Admin!
+										</p>
+									)}
+								</div>
+							)}
+						</>
 					) : (
 						<>
 							<h1 className="text-3xl text-violet-500 font-bold underline my-10">
@@ -159,9 +186,8 @@ export default function Positions() {
 											</thead>
 											<tbody className=" bg-gray-100 divide-y divide-gray-300">
 												{openorder.map((order, index) => (
-													<>
+													<React.Fragment key={order.orderId}>
 														<tr
-															key={order.orderId}
 															className={`${
 																order.side === "SELL" ? "bg-red-500/75" : "bg-green-500/75"
 															}`}
@@ -186,7 +212,7 @@ export default function Positions() {
 														{index < openorder.length - 1 && (
 															<tr className="h-2 bg-white/80"></tr>
 														)}
-													</>
+													</React.Fragment>
 												))}
 											</tbody>
 										</table>
@@ -218,7 +244,7 @@ export default function Positions() {
 										<tbody className="bg-slate-100">
 											{positions.map((pos, index) => (
 												<tr
-													key={index}
+													key={index + 1}
 													className={`${
 														Number(pos.unRealizedProfit) > 0
 															? "bg-red-500/75"

@@ -32,33 +32,29 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 						console.log(JSON.stringify({ msg, context }));
 					},
 				};
+				try {
+					const client = new USDMClient({
+						api_key: API_KEY,
+						api_secret: API_SECRET,
+					});
+					const allOrders = await client.getAllOpenOrders().then((res) => res);
 
-				const client = new USDMClient({
-					api_key: API_KEY,
-					api_secret: API_SECRET,
-				});
-
-				const allOrders = await client
-					.getAllOpenOrders()
-					.then((res) => res)
-					.catch((err) => console.log(err));
-
-				const allAssetBalances = await client
-					.getBalance()
-					.then((res) => {
+					const allAssetBalances = await client.getBalance().then((res) => {
 						return res;
-					})
-					.catch((err) => console.log(err));
+					});
 
-				const takeProfitOrders = await client.getPositions().then((result) => {
-					const myPositions = result.filter((val) => val.entryPrice !== "0.0");
-					const mySymbols = myPositions.map((pos) => pos.symbol);
-					return { myPositions, mySymbols };
-				});
+					const takeProfitOrders = await client.getPositions().then((result) => {
+						const myPositions = result.filter((val) => val.entryPrice !== "0.0");
+						const mySymbols = myPositions.map((pos) => pos.symbol);
+						return { myPositions, mySymbols };
+					});
 
-				return res
-					.status(200)
-					.json({ allAssetBalances, allOrders, takeProfitOrders });
+					return res
+						.status(200)
+						.json({ allAssetBalances, allOrders, takeProfitOrders });
+				} catch (error) {
+					return res.status(400).json(error);
+				}
 			} else {
 				// Not Signed in
 				res.status(401).json({ message: "Reaalllyy???" });

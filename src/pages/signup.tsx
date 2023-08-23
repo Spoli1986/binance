@@ -1,5 +1,4 @@
 import Image from "next/image";
-import Bitcoin from "../../public/assets/SL-0212121-40670-11.jpg";
 import Bg from "../../public/assets/4yD.gif";
 import type { NextPage } from "next";
 import { useState } from "react";
@@ -7,7 +6,7 @@ import Router from "next/router";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEye, faEyeSlash } from "@fortawesome/free-regular-svg-icons";
 import { useValidator } from "../../utils/commonFunctions";
-import axios from "axios";
+import axios, { AxiosError, AxiosResponse } from "axios";
 
 type UserData = {
 	emailAddress: string;
@@ -79,13 +78,19 @@ const Signup: NextPage = () => {
 			emailError: "",
 		});
 		try {
-			const res = await axios.post("/api/users", body);
-			setResponse({ status: res.status, message: "" });
+			const res: AxiosResponse = await axios.post("/api/users", body);
+			console.log("da");
+			setResponse({ status: res.status, message: res.data.message });
 			res.status === 200 && setData(INITIAL_DATA);
-		} catch (error) {
+		} catch (error: any) {
+			setResponse({
+				status: error.response.status,
+				message: error.response.data.message,
+			});
 			console.log(error);
 		}
 	};
+
 	return (
 		<div>
 			{createSuccess === "error" ? (
@@ -152,7 +157,7 @@ const Signup: NextPage = () => {
 										)}
 									</div>
 								</div>
-								<label htmlFor="password" className="text-white text-sm">
+								<label htmlFor="password" className="text-white text-sm text-center">
 									The password must be 8 characters long and contain at least one
 									uppercase letter, one number and one special character. No whitespace
 									is allowed!
@@ -162,42 +167,42 @@ const Signup: NextPage = () => {
 								</button>
 							</div>
 						</div>
-					</form>
-					<div className="font-inter md:w-2/5 text-center self-center">
-						{response.status !== 200 && (
-							<div className="bg-error_background h-12 rounded p-2 text-xl">
-								{response.message}
-							</div>
-						)}
-						{response.status === 200 && (
-							<>
-								<div
-									className={
-										"bg-green-300/40 rounded p-2 text-xl flex flex-col self-center m-5" +
-										(response.status === 200 ? "" : "hidden")
-									}
-								>
+						<div className="font-inter text-center self-center">
+							{response.status === 400 && (
+								<div className="text-center text-red-500 p-2 bg-red-100 animate-pulse rounded">
 									{response.message}
-									<button
-										className="bg-green-500 hover:bg-green-600 rounded-lg w-20 p-2 self-center my-3 text-sm"
-										onClick={successPage}
-									>
-										OK
-									</button>
 								</div>
-							</>
-						)}
-						{error.passwordError !== "" && (
-							<div className="bg-error_background h-12 rounded p-2 text-xl z-20 text-red-500">
-								{error.passwordError}
-							</div>
-						)}
-						{error.emailError !== "" && (
-							<div className="bg-error_background h-12 rounded p-2 text-xl ">
-								{error.emailError}
-							</div>
-						)}
-					</div>
+							)}
+							{response.status === 200 && (
+								<>
+									<div
+										className={
+											"bg-green-300/40 rounded p-2 text-xl flex flex-col self-center m-5" +
+											(response.status === 200 ? "" : "hidden")
+										}
+									>
+										{response.message}
+										<button
+											className="bg-green-500 hover:bg-green-600 rounded-lg w-20 p-2 self-center my-3 text-sm"
+											onClick={successPage}
+										>
+											OK
+										</button>
+									</div>
+								</>
+							)}
+							{error.passwordError !== "" && (
+								<div className="text-center text-red-500 p-2 bg-red-100 animate-pulse rounded">
+									{error.passwordError}
+								</div>
+							)}
+							{error.emailError !== "" && (
+								<div className="text-center text-red-500 p-2 bg-red-100 animate-pulse rounded">
+									{error.emailError}
+								</div>
+							)}
+						</div>
+					</form>
 				</div>
 			)}
 		</div>

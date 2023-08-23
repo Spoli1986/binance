@@ -80,9 +80,7 @@ export default function CustomizedAccordions({ children }: Props) {
 				>
 					<Typography>How it works?</Typography>
 				</AccordionSummary>
-				<AccordionDetails>
-					<Typography>{children}</Typography>
-				</AccordionDetails>
+				<AccordionDetails>{children}</AccordionDetails>
 			</Accordion>
 		</div>
 	);
