@@ -47,21 +47,21 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 							const userWsKey = event.wsKey;
 
 							try {
-								// const user: TUser | null = await User.findOne({ wsKey: userWsKey });
-								// const symbol: string = event.order.symbol;
-								// const findKeyByValue = (obj: any, value: string) => {
-								// 	return Object.keys(obj).find((key) => obj[key].includes(value));
-								// };
-								// const strategy = findKeyByValue(user?.strategies, symbol);
-								// const body = {
-								// 	symbol,
-								// 	event,
-								// 	userId,
-								// };
-								// await axios.post(
-								// 	"http://localhost:3000/api/strategies/" + strategy,
-								// 	body,
-								// );
+								const user: TUser | null = await User.findOne({ wsKey: userWsKey });
+								const symbol: string = event.order.symbol;
+								const findKeyByValue = (obj: any, value: string) => {
+									return Object.keys(obj).find((key) => obj[key].includes(value));
+								};
+								const strategy = findKeyByValue(user?.strategies, symbol);
+								const body = {
+									symbol,
+									event,
+									userId,
+								};
+								await axios.post(
+									"http://localhost:3000/api/strategies/" + strategy,
+									body,
+								);
 							} catch (error) {
 								console.log(error);
 								return "No user found";
