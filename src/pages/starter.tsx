@@ -14,7 +14,7 @@ export default function Starter({}: Props) {
 		const userId = session.data.user.id;
 		const startWebSocketPeti = async () => {
 			try {
-				await axios.post("/api/openconnection", { userId });
+				await axios.post("/api/openconnection", { userId: userId });
 			} catch (error) {
 				console.log(error);
 			}
@@ -37,7 +37,9 @@ export default function Starter({}: Props) {
 		};
 		const startWebSocketKPeti = async () => {
 			try {
-				await axios.post("/api/openconnection", { userId: "KPETI" });
+				await axios.post("/api/openconnection", {
+					userId: "64e5c4178b880db33ac77622",
+				});
 			} catch (error) {
 				console.log(error);
 			}

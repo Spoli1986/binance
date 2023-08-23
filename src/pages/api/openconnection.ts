@@ -26,13 +26,13 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 				wsBinance.subscribeUsdFuturesUserDataStream(false, true);
 				wsBinance.on("open", async (event) => {
 					try {
-						// const saveWsKey = await User.findOneAndUpdate(
-						// 	{ _id: userId },
-						// 	{
-						// 		wsKey: event.wsKey,
-						// 	},
-						// 	{ new: true },
-						// );
+						const saveWsKey = await User.findOneAndUpdate(
+							{ _id: userId },
+							{
+								wsKey: event.wsKey,
+							},
+							{ new: true },
+						);
 					} catch (error) {
 						console.log(error);
 						return res.status(401).json({ error });
