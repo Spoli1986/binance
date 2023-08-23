@@ -22,16 +22,12 @@ import { useExchangeInfo } from "../../utils/commonFunctions";
 import { useSession } from "next-auth/react";
 import Loading from "../../components/Loading";
 import React from "react";
+import { TAError } from "../../utils/types";
 
 const inter = Inter({ subsets: ["latin"] });
 type Balances = {
 	usdtBalance: FuturesAccountBalance[];
 	busdBalance: FuturesAccountBalance[];
-};
-
-type AError = {
-	status: number;
-	message: string;
 };
 
 type FilterType = {
@@ -76,7 +72,7 @@ type SymbolPriceType = {
 type MarkPriceType = Array<SymbolPriceType>;
 const ORDER_DATA: OrderResult[] = [];
 export default function Positions() {
-	const [error, setError] = useState<AError>();
+	const [error, setError] = useState<TAError>();
 	const [loading, setLoading] = useState<boolean>(false);
 	const [balance, setBalance] = useState<Balances>(INITIAL_DATA);
 	const [openorder, setOpenOrder] = useState(ORDER_DATA);

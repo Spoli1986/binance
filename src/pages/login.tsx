@@ -20,12 +20,16 @@ const Login = () => {
 	const [data, setData] = useState<UserData>(INITIAL_DATA);
 	const session = useSession();
 	const [emailError, setEmailError] = useState<string>("");
+	const [loading, setLoading] = useState<boolean>(false);
+
 	const { executeRecaptcha } = useGoogleReCaptcha();
 
 	const handleSubmitForm = async (e: FormEvent) => {
 		e.preventDefault();
+		setLoading(true);
 		if (!executeRecaptcha) {
 			console.log("Execute recaptcha not yet available");
+			setLoading(false);
 			return;
 		}
 		executeRecaptcha("enquiryFormSubmit").then((gReCaptchaToken) => {
@@ -51,9 +55,13 @@ const Login = () => {
 			role: data.email === "admin@spolarpeter.cc" ? "admin" : "",
 		})
 			.then((res) => {
+				setLoading(false);
 				if (res?.error) setEmailError(res.error);
 			})
-			.catch((err) => console.log(err));
+			.catch((err) => {
+				setLoading(false);
+				console.log(err);
+			});
 	};
 
 	return (
@@ -105,9 +113,13 @@ const Login = () => {
 										className="text-onyx border border-[#B5B5B5] h-12 rounded p-2 outline-none content-['*']"
 									/>
 								</div>
-								<button role="button" className="text-white">
-									Submit
-								</button>
+								{loading ? (
+									<Loading type="button" />
+								) : (
+									<button role="button" className="text-white">
+										Submit
+									</button>
+								)}
 							</div>
 							{emailError && (
 								<div className="text-center text-red-500 p-2 bg-red-100 animate-pulse rounded">

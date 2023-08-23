@@ -7,6 +7,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEye, faEyeSlash } from "@fortawesome/free-regular-svg-icons";
 import { useValidator } from "../../utils/commonFunctions";
 import axios, { AxiosError, AxiosResponse } from "axios";
+import Loading from "../../components/Loading";
 
 type UserData = {
 	emailAddress: string;
@@ -31,6 +32,8 @@ const Signup: NextPage = () => {
 	});
 	const [passwordShown, setPasswordShown] = useState(false);
 	const [hideIcon, setHideIcon] = useState(true);
+	const [loading, setLoading] = useState<boolean>(false);
+
 	const { emailValidator } = useValidator();
 
 	const { passwordValidator } = useValidator();
@@ -52,7 +55,6 @@ const Signup: NextPage = () => {
 
 	const registerUser = async (e: any) => {
 		e.preventDefault();
-
 		const isValidPassword = passwordValidator(data.password)
 			? null
 			: "Invalid password!";
@@ -78,16 +80,20 @@ const Signup: NextPage = () => {
 			emailError: "",
 		});
 		try {
+			setLoading(true);
+
 			const res: AxiosResponse = await axios.post("/api/users", body);
 			console.log("da");
 			setResponse({ status: res.status, message: res.data.message });
 			res.status === 200 && setData(INITIAL_DATA);
+			setLoading(false);
 		} catch (error: any) {
 			setResponse({
 				status: error.response.status,
 				message: error.response.data.message,
 			});
 			console.log(error);
+			setLoading(false);
 		}
 	};
 
@@ -97,6 +103,13 @@ const Signup: NextPage = () => {
 				<div>Error</div>
 			) : (
 				<div className="flex flex-col w-screen h-screen align-middle items-center justify-center">
+					<div className="flex flex-col gap-4 bg-slate-100/30 p-4 rounded-md absolute top-5 right-10 z-20">
+						<div>
+							<button onClick={() => Router.push("/login")} className="text-white">
+								Login
+							</button>
+						</div>
+					</div>
 					<Image
 						src={Bg}
 						alt="Background"
@@ -162,9 +175,13 @@ const Signup: NextPage = () => {
 									uppercase letter, one number and one special character. No whitespace
 									is allowed!
 								</label>
-								<button role="button" className="text-white">
-									Submit
-								</button>
+								{loading ? (
+									<Loading type="button" />
+								) : (
+									<button role="button" className="text-white">
+										Submit
+									</button>
+								)}
 							</div>
 						</div>
 						<div className="font-inter text-center self-center">

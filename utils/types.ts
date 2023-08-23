@@ -18,3 +18,8 @@ export type TUser = {
 	wsKey: string;
 	role: string;
 };
+
+export type TAError = {
+	status: number;
+	message: string;
+};

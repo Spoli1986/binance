@@ -14,7 +14,7 @@ import CheckBoxIcon from "@mui/icons-material/CheckBox";
 import { connect } from "../../utils/connection";
 import User from "../../model/User";
 import { getSession } from "next-auth/react";
-import { TUser, Strategies } from "../../utils/types";
+import { TUser, Strategies, TAError } from "../../utils/types";
 import CustomizedAccordions from "../../components/Accordion";
 import FourNHalf from "../../components/accordionDetails/FourFHalf";
 import Aor from "../../components/accordionDetails/Aor";
@@ -22,6 +22,7 @@ import FiftyEighty from "../../components/accordionDetails/FiftyEighty";
 import FiftyFifty from "../../components/accordionDetails/FiftyFifty";
 import ThreeFiftyEighty from "../../components/accordionDetails/ThreeFiftyEighty";
 import MaxForty from "../../components/accordionDetails/MaxForty";
+import Loading from "../../components/Loading";
 
 const icon = <CheckBoxOutlineBlankIcon fontSize="small" />;
 const checkedIcon = <CheckBoxIcon fontSize="small" />;
@@ -30,6 +31,8 @@ type Props = { user: TUser; list: string[] };
 export default function Positions({ user, list }: Props) {
 	const [exchange, setExchange] = useState<string[]>(list);
 	const [strategies, setStrategies] = useState<Strategies>(user.strategies);
+	const [error, setError] = useState<TAError>();
+	const [loading, setLoading] = useState<boolean>(false);
 
 	function updateFields(fields: Strategies) {
 		setStrategies((prev: any) => {
@@ -38,9 +41,16 @@ export default function Positions({ user, list }: Props) {
 	}
 
 	const saveStrategies = async () => {
-		const response = await axios.put("/api/users/" + user._id, {
-			strategies,
-		});
+		try {
+			setLoading(true);
+			const response = await axios.put("/api/users/" + user._id, {
+				strategies,
+			});
+			response.status === 200 && setLoading(false);
+		} catch (error: any) {
+			setLoading(false);
+			setError({ status: error.response.status, message: error.response.message });
+		}
 	};
 
 	return (
@@ -50,7 +60,7 @@ export default function Positions({ user, list }: Props) {
 					<form
 						action=""
 						onSubmit={saveStrategies}
-						className="flex flex-col  gap-6 "
+						className="flex flex-col items-center gap-6 "
 					>
 						<div className="flex flex-col gap-4 p-3 border border-gray-500 rounded-md">
 							<label className="font-semibold text-lg">4NHalf</label>
@@ -397,12 +407,16 @@ export default function Positions({ user, list }: Props) {
 								)}
 							/>
 						</div>
-						<button
-							role="button"
-							className="bg-gradient-to-r from-purple-800 via-violet-900 to-purple-800 text-white w-[80px] h-14 uppercase self-center rounded-sm"
-						>
-							save
-						</button>
+						{loading ? (
+							<Loading type="button" />
+						) : (
+							<button
+								role="button"
+								className="bg-gradient-to-r from-purple-800 via-violet-900 to-purple-800 text-white w-[80px] h-14 uppercase self-center rounded-sm"
+							>
+								save
+							</button>
+						)}
 					</form>
 				</div>
 			</div>

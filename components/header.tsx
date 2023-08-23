@@ -7,7 +7,7 @@ type Props = {};
 function Header({}: Props) {
 	return (
 		<div className="h-[250px] w-screen flex flex-row justify-end">
-			<Image src={Bg} alt="Background header" className="w-screen" />
+			<Image src={Bg} alt="Background header" className="w-screen opacity-90" />
 			<LongMenu />
 		</div>
 	);

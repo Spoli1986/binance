@@ -24,7 +24,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 					id,
 					{ strategies: req.body.strategies },
 					{ new: true },
-				).catch(catcher);
+				);
 				return res.status(200).json("success");
 			} catch (error) {
 				error;
