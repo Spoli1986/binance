@@ -22,8 +22,8 @@ export default function Starter({}: Props) {
 
 		const startWebSocketLevi = async () => {
 			try {
-				await axios.post("/api/levi", {
-					userId: "64e5c4178b880db33ac77622",
+				await axios.post("/api/openconnection", {
+					userId: "64e5e6be11510fbafbffd0b0",
 				});
 			} catch (error) {
 				console.log(error);
