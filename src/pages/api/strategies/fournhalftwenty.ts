@@ -33,10 +33,10 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 			});
 
 			const priceDistancePercentage: number[] = [
-				0.0072, 0.0136, 0.02, 0.0256, 0.0385,
+				0.0075, 0.0118, 0.0168, 0.0212, 0.0378,
 			];
 
-			const buyInMultiplier: number[] = [2.5, 3.75, 4.5, 5.85, 14.625];
+			const buyInMultiplier: number[] = [3, 3, 4.6, 5, 15];
 
 			const getPositions = async () => {
 				const positions = await client

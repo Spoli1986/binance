@@ -20,12 +20,14 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 			await connect();
 
 			try {
-				await User.findByIdAndUpdate(
+				const user = await User.findByIdAndUpdate(
 					id,
 					{ strategies: req.body.strategies },
 					{ new: true },
 				);
-				return res.status(200).json("success");
+				return res
+					.status(200)
+					.json({ message: "success", strategies: user.strategies });
 			} catch (error) {
 				error;
 				return res.status(400).json({ message: "wrong", error });

@@ -22,7 +22,9 @@ export default function Starter({}: Props) {
 
 		const startWebSocketLevi = async () => {
 			try {
-				await axios.post("/api/levi");
+				await axios.post("/api/levi", {
+					userId: "64e5c4178b880db33ac77622",
+				});
 			} catch (error) {
 				console.log(error);
 			}
@@ -30,7 +32,7 @@ export default function Starter({}: Props) {
 
 		const startWebSocketRoli = async () => {
 			try {
-				await axios.get("/api/roli");
+				await axios.post("/api/roli", { userId: {} });
 			} catch (error) {
 				console.log(error);
 			}

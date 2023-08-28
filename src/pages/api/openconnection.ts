@@ -42,7 +42,6 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 				wsBinance.on(
 					"formattedUserDataMessage",
 					async (event: WsUserDataEvents) => {
-						console.log(event);
 						if (event.eventType === "ORDER_TRADE_UPDATE") {
 							const userWsKey = event.wsKey;
 
@@ -58,10 +57,21 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 									event,
 									userId,
 								};
-								await axios.post(
-									"http://localhost:3000/api/strategies/" + strategy,
-									body,
-								);
+								if (strategy) {
+									const response = await axios.post(
+										"http://localhost:3000/api/strategies/" + strategy,
+										body,
+									);
+									response.status === 200
+										? res.status(200).json({ message: "strategy loaded successfuly" })
+										: res
+												.status(response.status)
+												.json({ message: "strategy cannot be loaded", response });
+									return res;
+								} else
+									return res.status(204).json({
+										message: "This asset has not been assigned to any strategy yet!",
+									});
 							} catch (error) {
 								console.log(error);
 								return "No user found";

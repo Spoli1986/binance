@@ -13,6 +13,11 @@ import {
 import { getSession } from "next-auth/react";
 import axios from "axios";
 
+type Body = {
+	userId: string;
+	event: WsUserDataEvents;
+	symbol: string;
+};
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
 	const catcher = (error: Error) => res.status(400).json({ error });
 
@@ -20,9 +25,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 
 	const handleCase: ResponseFuncs = {
 		POST: async (req: NextApiRequest, res: NextApiResponse) => {
-			const { userId, event, symbol } = req.body;
-
-			const session = await getSession({ req });
+			const { userId, event, symbol }: Body = req.body;
 
 			const API_KEY = process.env[`NEXT_PUBLIC_BINANCE_KEY_${userId}`];
 			const API_SECRET = process.env[`NEXT_PUBLIC_BINANCE_SECRET_${userId}`];
@@ -31,12 +34,6 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 				api_key: API_KEY,
 				api_secret: API_SECRET,
 			});
-
-			const priceDistancePercentage: number[] = [
-				0.0072, 0.0136, 0.02, 0.0256, 0.0385,
-			];
-
-			const buyInMultiplier: number[] = [2.5, 3.75, 4.5, 5.85, 14.625];
 
 			const getPositions = async () => {
 				const positions = await client
@@ -101,6 +98,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 							Number(stepSize.stepSize) < 1
 								? stepSize.stepSize.split(".").pop().indexOf("1") + 1
 								: 0;
+
 						return [tickSize, place];
 					});
 				return precisions;
@@ -108,97 +106,80 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 
 			console.log(userId + ":::: ", event);
 			if (event.eventType === "ORDER_TRADE_UPDATE") {
-				const position = await getPosition(symbol);
-				const balance = await getBalance(event.order.commissionAsset);
-				const openOrders: void | OrderResult[] = await getOpenOrders(symbol);
-
-				const precisions = await exchangeInfo(symbol);
-				const posPercentage = position
-					? (Number(position.isolatedWallet) / Number(balance)) * 100
-					: 0;
+				const position = await getPosition(event.order.symbol);
+				const openOrders: void | OrderResult[] = await getOpenOrders(
+					event.order.symbol,
+				);
+				const precisions = await exchangeInfo(event.order.symbol);
 
 				const entryPrice: number = position ? Number(position.entryPrice) : 0;
 
-				const posDirection = position
+				const liquidationPrice = position ? Number(position.liquidationPrice) : 0;
+				const posAmount = position
 					? Number(position.positionAmt) > 0
-						? 1
-						: -1
+						? Number(position.positionAmt)
+						: -1 * Number(position.positionAmt)
 					: 0;
-
-				const entryMargin = position ? Number(position.isolatedWallet) : 0;
-
+				const entryMargin = position
+					? Number(position.isolatedWallet) > 11
+						? Number(position.isolatedWallet)
+						: 11
+					: 0;
 				const takeProfitSide: OrderSide =
 					event.order.orderSide === "SELL" ? "BUY" : "SELL";
 				const takeProfitPrice: number = position
-					? (entryMargin * 0.35) / Number(position.positionAmt) + entryPrice
+					? entryMargin / 2.5 / Number(position.positionAmt) + entryPrice
 					: 0;
-
-				const stopLossPrice: number = position
-					? (entryMargin * -0.5) / Number(position.positionAmt) + entryPrice
+				const takeProfitPricePartial: number = position
+					? entryMargin / 4 / Number(position.positionAmt) + entryPrice
 					: 0;
-				let orderPriceArray: number[] = [];
-
-				position &&
-					priceDistancePercentage.map((perc: number) =>
-						orderPriceArray.push(entryPrice - entryPrice * perc * posDirection),
-					);
-
-				let orderQuantityArray: number[] = [];
-
-				position &&
-					buyInMultiplier.map((multiplier: number) =>
-						orderQuantityArray.push(
-							Number(position.positionAmt) * multiplier * posDirection,
-						),
-					);
-
-				if (
-					event.order.orderStatus === "FILLED" &&
-					!event.order.isReduceOnly &&
-					event.order.originalOrderType !== "TAKE_PROFIT"
-				) {
+				const orderPrice: number = position
+					? entryMargin / -2 / Number(position.positionAmt) + entryPrice
+					: 0;
+				if (event.order.orderStatus === "FILLED" && !event.order.isReduceOnly) {
 					if (event.order.executionType === "TRADE") {
 						console.log(
-							"quantity: ",
-							orderQuantityArray,
+							entryPrice,
 							"; ",
-							"order price: ",
-							orderPriceArray,
+							liquidationPrice,
 							"; ",
-							"TP Price: ",
+							Number(position.positionAmt),
+							"; ",
+							takeProfitSide,
+							":",
 							takeProfitPrice,
+							";",
+							takeProfitPricePartial,
+							";",
+							orderPrice,
+							position.leverage + "x",
 						);
-
-						if (
-							event.order.originalQuantity ===
-							Number(position.positionAmt) * posDirection
-						) {
-							orderPriceArray.map(async (price: number, i: number) => {
-								await client.submitNewOrder({
-									symbol: event.order.symbol,
-									side: event.order.orderSide,
-									type: "LIMIT",
-									quantity: Number(orderQuantityArray[i].toFixed(precisions[1])),
-									price: Number(price.toFixed(precisions[0])),
-									timeInForce: "GTC",
-								});
+						if (Number(position.isolatedWallet) > 40) {
+							await client.submitNewOrder({
+								symbol: event.order.symbol,
+								side: takeProfitSide,
+								type: "STOP_MARKET",
+								stopPrice: Number(orderPrice.toFixed(precisions[0])),
+								timeInForce: "GTC",
+								closePosition: "true",
+							});
+						} else {
+							await client.submitNewOrder({
+								symbol: event.order.symbol,
+								side: event.order.orderSide,
+								type: "LIMIT",
+								quantity: Number((posAmount / 2).toFixed(precisions[1])),
+								price: Number(orderPrice.toFixed(precisions[0])),
+								timeInForce: "GTC",
 							});
 						}
 						if (openOrders && !!openOrders.length) {
-							const tpOrders: OrderResult[] = openOrders.filter(
-								(order: OrderResult) => order.origType === "TAKE_PROFIT_MARKET",
+							const takeProfitOrders: OrderResult[] = openOrders.filter(
+								(order: OrderResult) =>
+									order.origType === "TAKE_PROFIT_MARKET" ||
+									order.origType === "TAKE_PROFIT",
 							);
-							if (openOrders.length === 1 && tpOrders.length === 1) {
-								await client.submitNewOrder({
-									symbol: event.order.symbol,
-									side: takeProfitSide,
-									type: "STOP_MARKET",
-									stopPrice: Number(stopLossPrice.toFixed(precisions[0])),
-									timeInForce: "GTC",
-									closePosition: "true",
-								});
-							}
-							tpOrders.map(async (order: OrderResult) => {
+							takeProfitOrders.map(async (order) => {
 								await client
 									.cancelOrder({
 										symbol: event.order.symbol,
@@ -217,7 +198,48 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 							priceProtect: "TRUE",
 							timeInForce: "GTC",
 						});
+						await client.submitNewOrder({
+							symbol: event.order.symbol,
+							side: takeProfitSide,
+							type: "TAKE_PROFIT",
+							quantity: Number((posAmount / 2).toFixed(precisions[1])),
+							price: Number(takeProfitPricePartial.toFixed(precisions[0])),
+							stopPrice: Number(takeProfitPricePartial.toFixed(precisions[0])),
+							priceProtect: "TRUE",
+							timeInForce: "GTC",
+							reduceOnly: "true",
+						});
 					}
+				} else if (
+					event.order.orderStatus === "FILLED" &&
+					event.order.originalOrderType === "TAKE_PROFIT"
+				) {
+					const orderSide: OrderSide =
+						event.order.orderSide === "SELL" ? "BUY" : "SELL";
+
+					if (openOrders && !!openOrders.length) {
+						const limitOrStopOrders: OrderResult[] = openOrders.filter(
+							(order: OrderResult) =>
+								order.origType === "LIMIT" || order.origType === "STOP_MARKET",
+						);
+						limitOrStopOrders.map(async (order) => {
+							await client
+								.cancelOrder({
+									symbol: event.order.symbol,
+									orderId: order.orderId,
+								})
+								.then((res) => res)
+								.catch((error) => console.log(error));
+						});
+					}
+					await client.submitNewOrder({
+						symbol: event.order.symbol,
+						side: orderSide,
+						type: "LIMIT",
+						quantity: Number((posAmount / 2).toFixed(precisions[1])),
+						price: Number(orderPrice.toFixed(precisions[0])),
+						timeInForce: "GTC",
+					});
 				} else if (
 					event.order.orderStatus === "FILLED" &&
 					event.order.isReduceOnly
@@ -233,10 +255,31 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 								.catch((error) => console.log(error));
 						});
 					}
+					if (event.order.originalOrderType === "TAKE_PROFIT_MARKET") {
+						const leverage: number = await client
+							.getPositions()
+							.then((positions: FuturesPosition[]) => {
+								const symbolInfo: FuturesPosition[] = positions.filter(
+									(position: FuturesPosition) => position.symbol === event.order.symbol,
+								);
+								const leverage = symbolInfo[0].leverage;
+								return Number(leverage);
+							});
+						await client.submitNewOrder({
+							symbol: event.order.symbol,
+							side: takeProfitSide,
+							type: "MARKET",
+							quantity: Number(
+								((10 * leverage) / event.order.lastFilledPrice).toFixed(precisions[1]),
+							),
+							timeInForce: "GTC",
+						});
+					}
 				}
 			}
 
-			console.log("4NHalf for " + userId);
+			console.log("Max40 for " + userId);
+
 			res.end();
 		},
 	};

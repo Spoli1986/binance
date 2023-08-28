@@ -14,9 +14,11 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 			const userId = req.body.userId;
 			const session = await getSession({ req });
 			if (session) {
+				// const API_KEY = process.env[`NEXT_PUBLIC_BINANCE_KEY_ROLI`];
+				// const API_SECRET = process.env[`NEXT_PUBLIC_BINANCE_SECRET_ROLI`];
+
 				const API_KEY = process.env[`NEXT_PUBLIC_BINANCE_KEY_${userId}`];
 				const API_SECRET = process.env[`NEXT_PUBLIC_BINANCE_SECRET_${userId}`];
-
 				const ignoredSillyLogMsgs = [
 					"Sending ping",
 					"Received pong, clearing pong timer",

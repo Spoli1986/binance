@@ -79,6 +79,8 @@ export default function Positions() {
 	const [selectedOrders, setSelectedOrders] = useState<number[]>([]);
 	const [positions, setPositions] = useState<FuturesPosition[]>([]);
 	const [allSymbols, setAllSymbols] = useState<string[]>([]);
+	let accMargin = 0;
+	let unrealizedPnL = 0;
 
 	const session = useSession();
 	const userId = session.data?.user.id;
@@ -112,7 +114,6 @@ export default function Positions() {
 			});
 		}
 	};
-
 	return (
 		<div className="w-full overflow-x-auto min-h-[calc(100vh-250px)] flex flex-col items-center justify-center bg-gradient-to-b from-gray-900 via-purple-900 to-violet-900">
 			{session.status === "authenticated" && (
@@ -167,17 +168,16 @@ export default function Positions() {
 								Open Orders
 							</h1>
 							{openorder.length ? (
-								<div className="w-screen">
+								<div className="w-full sm:w-[95%] p-2 sm:p-7 overscroll-none">
 									<div className="overflow-x-auto">
-										<table className="w-full">
+										<table className="w-full overscroll-x-none">
 											<thead className="border-b-4 border-blue-400 text-white bg-gradient-to-r from-purple-800 via-violet-900 to-purple-800">
 												<tr className="items-start">
 													<th className="py-3 pl-4 text-start">Side</th>
 													<th className="py-3 pl-4 text-start">Type</th>
 													<th className="py-3 pl-4 text-start">Symbol</th>
-													<th className="py-3 pl-4 text-start">Amount $</th>
+													<th className="py-3 pl-4 text-start">Amount</th>
 													<th className="py-3 pl-4 text-start">Price</th>
-													<th className="py-3 pl-4 text-start">Profit</th>
 												</tr>
 											</thead>
 											<tbody className=" bg-gray-100 divide-y divide-gray-300">
@@ -197,13 +197,12 @@ export default function Positions() {
 															<td className="py-2 pl-4">{order.symbol}</td>
 															<td className="py-2 pl-4">
 																{order.origType === "LIMIT"
-																	? ((Number(order.origQty) * Number(order.price)) / 10).toFixed(
-																			2,
-																	  )
+																	? (Number(order.origQty) * Number(order.price)).toFixed(2)
 																	: "CLOSE POSITION"}
 															</td>
-															<td className="py-2 pl-4">{order.price || order.stopPrice}</td>
-															<td className="py-2 pl-4">{order.stopPrice || order.price}</td>
+															<td className="py-2 pl-4">
+																${order.price ? order.price : order.stopPrice}
+															</td>
 														</tr>
 														{index < openorder.length - 1 && (
 															<tr className="h-2 bg-white/80"></tr>
@@ -221,7 +220,7 @@ export default function Positions() {
 								Open Positions
 							</h1>
 							{positions.length ? (
-								<div className="overflow-scroll w-full">
+								<div className="overflow-scroll w-full sm:w-[95%] p-2 sm:p-7 overscroll-x-none">
 									<table className="w-full">
 										<thead className="border-b-4 border-blue-400 w-full text-white bg-gradient-to-r from-purple-800 via-violet-900 to-purple-800">
 											<tr className="items-start w-full">
@@ -237,35 +236,70 @@ export default function Positions() {
 												<th className="text-start">Unrzld Profit</th>
 											</tr>
 										</thead>
-										<tbody className="bg-slate-100">
-											{positions.map((pos, index) => (
-												<tr
-													key={index + 1}
-													className={`${
-														Number(pos.unRealizedProfit) > 0
-															? "bg-red-500/75"
-															: "bg-green-500/75"
-													}`}
-												>
-													<td>{Number(pos.notional) < 0 ? "SHORT" : "LONG"}</td>
-													<td>{pos.symbol}</td>
-													<td>{new Date(pos.updateTime).toLocaleDateString()}</td>
-													<td>{pos.leverage}</td>
-													<td>{Number(pos.entryPrice).toFixed(3)}</td>
-													<td>{Number(pos.liquidationPrice).toFixed(3)}</td>
-													<td>{pos.marginType}</td>
-													<td>{Number(pos.markPrice).toFixed(3)}</td>
-													<td>{Number(pos.isolatedWallet).toFixed(3)}</td>
-													<td>
-														{Number(pos.unRealizedProfit).toFixed(3)} /{" "}
-														{(
-															(Number(pos.unRealizedProfit) / Number(pos.isolatedWallet)) *
-															100
-														).toFixed(3)}
-														%
-													</td>
-												</tr>
-											))}
+										<tbody className="divide-y divide-gray-300">
+											{positions.map((pos, index) => {
+												accMargin += Number(pos.isolatedWallet);
+												unrealizedPnL += Number(pos.unRealizedProfit);
+												return (
+													<React.Fragment key={pos.symbol}>
+														<tr
+															className={`${
+																Number(pos.unRealizedProfit) < 0
+																	? "bg-red-500/75"
+																	: "bg-green-500/75"
+															}`}
+														>
+															<td className="py-2 pl-4">
+																{Number(pos.notional) < 0 ? "SHORT" : "LONG"}
+															</td>
+															<td className="py-2 pl-4">{pos.symbol}</td>
+															<td className="py-2 pl-4">
+																{new Date(pos.updateTime).toLocaleDateString()}
+															</td>
+															<td className="py-2 pl-4">{pos.leverage}</td>
+															<td className="py-2 pl-4">
+																${Number(pos.entryPrice).toFixed(3)}
+															</td>
+															<td className="py-2 pl-4">
+																${Number(pos.liquidationPrice).toFixed(3)}
+															</td>
+															<td className="py-2 pl-4">{pos.marginType}</td>
+															<td className="py-2 pl-4">
+																${Number(pos.markPrice).toFixed(3)}
+															</td>
+															<td className="py-2 pl-4">
+																${Number(pos.isolatedWallet).toFixed(3)}
+															</td>
+															<td className="py-2 pl-4">
+																${Number(pos.unRealizedProfit).toFixed(3)} /{" "}
+																{(
+																	(Number(pos.unRealizedProfit) / Number(pos.isolatedWallet)) *
+																	100
+																).toFixed(3)}
+																%
+															</td>
+														</tr>
+														{index < openorder.length - 1 && (
+															<tr className="h-2 bg-white/80"></tr>
+														)}
+													</React.Fragment>
+												);
+											})}
+											<tr className="bg-none text-white text-xl">
+												<td>Total:</td>
+												<td></td>
+												<td></td>
+												<td></td>
+												<td></td>
+												<td></td>
+												<td></td>
+												<td></td>
+												<td className="py-2 pl-4">${accMargin.toFixed(2)}</td>
+												<td className="py-2 pl-4">
+													${unrealizedPnL.toFixed(2)} /{" "}
+													{((unrealizedPnL / accMargin) * 100).toFixed(2)}%
+												</td>
+											</tr>
 										</tbody>
 									</table>
 								</div>

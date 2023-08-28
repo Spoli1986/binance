@@ -8,6 +8,13 @@ module.exports = {
 	],
 	theme: {
 		extend: {
+			textColor: {
+				"purple-gradient":
+					"gradient-to-r from-purple-800 via-violet-900 to-purple-800",
+			},
+			fontFamily: {
+				mortal: ["MK4"],
+			},
 			backgroundImage: {
 				"gradient-radial": "radial-gradient(var(--tw-gradient-stops))",
 				"gradient-conic":
