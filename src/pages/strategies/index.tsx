@@ -104,6 +104,7 @@ export default function Strategies({ user, list }: Props) {
 									...strategies.fiftyfifty,
 									...strategies.maxforty,
 									...strategies.maxfortytenr,
+									...strategies.maxeight,
 								];
 								return strategyArray.includes(option);
 							}}
@@ -158,6 +159,7 @@ export default function Strategies({ user, list }: Props) {
 									...strategies.fiftyfifty,
 									...strategies.maxforty,
 									...strategies.maxfortytenr,
+									...strategies.maxeight,
 								];
 								return strategyArray.includes(option);
 							}}
@@ -219,6 +221,8 @@ export default function Strategies({ user, list }: Props) {
 									...strategies.fiftyfifty,
 									...strategies.maxforty,
 									...strategies.maxfortytenr,
+									...strategies.avalancheorrocketreverse,
+									...strategies.maxeight,
 								];
 								return strategyArray.includes(option);
 							}}
@@ -242,6 +246,65 @@ export default function Strategies({ user, list }: Props) {
 							onChange={(event, newValue) => {
 								updateFields({
 									avalancheorrocket: newValue,
+								});
+							}}
+							renderInput={(params) => (
+								<TextField
+									{...params}
+									label="Assets"
+									placeholder="...or start typing"
+								/>
+							)}
+						/>
+						<label className="font-semibold text-lg">
+							Avalanche or Rocket Reverse
+						</label>
+						<Autocomplete
+							multiple
+							id="checkboxes-tags-demo"
+							options={exchange
+								.map((symbol: string) => symbol)
+								.sort((a: string, b: string) => {
+									return a.toLowerCase().localeCompare(b.toLowerCase());
+								})}
+							value={strategies.avalancheorrocketreverse || []}
+							disableCloseOnSelect
+							getOptionLabel={(option: string) => option}
+							getOptionDisabled={(option) => {
+								const strategyArray = [
+									...strategies.fournhalf,
+									...strategies.fiftyeighty,
+									...strategies.threefiftyeighty,
+									...strategies.fiftyfifty,
+									...strategies.maxforty,
+									...strategies.maxfortytenr,
+									...strategies.avalancheorrocket,
+									...strategies.maxeight,
+								];
+								return strategyArray.includes(option);
+							}}
+							renderOption={(props, option, { selected }) => {
+								const isSelected = strategies.avalancheorrocketreverse
+									? strategies.avalancheorrocketreverse.some(
+											(skill: any) => skill === option,
+									  )
+									: selected;
+
+								return (
+									<li {...props}>
+										<Checkbox
+											icon={icon}
+											checkedIcon={checkedIcon}
+											style={{ marginRight: 8 }}
+											checked={isSelected}
+										/>
+										{option}
+									</li>
+								);
+							}}
+							onChange={(event, newValue) => {
+								updateFields({
+									avalancheorrocketreverse: newValue,
 								});
 							}}
 							renderInput={(params) => (
@@ -278,9 +341,11 @@ export default function Strategies({ user, list }: Props) {
 									...strategies.fournhalf,
 									...strategies.threefiftyeighty,
 									...strategies.avalancheorrocket,
+									...strategies.avalancheorrocketreverse,
 									...strategies.fiftyfifty,
 									...strategies.maxforty,
 									...strategies.maxfortytenr,
+									...strategies.maxeight,
 								];
 								return strategyArray.includes(option);
 							}}
@@ -340,9 +405,11 @@ export default function Strategies({ user, list }: Props) {
 									...strategies.fournhalf,
 									...strategies.fiftyeighty,
 									...strategies.avalancheorrocket,
+									...strategies.avalancheorrocketreverse,
 									...strategies.threefiftyeighty,
 									...strategies.maxforty,
 									...strategies.maxfortytenr,
+									...strategies.maxeight,
 								];
 								return strategyArray.includes(option);
 							}}
@@ -401,9 +468,11 @@ export default function Strategies({ user, list }: Props) {
 									...strategies.fournhalf,
 									...strategies.fiftyeighty,
 									...strategies.avalancheorrocket,
+									...strategies.avalancheorrocketreverse,
 									...strategies.fiftyfifty,
 									...strategies.maxforty,
 									...strategies.maxfortytenr,
+									...strategies.maxeight,
 								];
 								return strategyArray.includes(option);
 							}}
@@ -462,9 +531,11 @@ export default function Strategies({ user, list }: Props) {
 									...strategies.fournhalf,
 									...strategies.fiftyeighty,
 									...strategies.avalancheorrocket,
+									...strategies.avalancheorrocketreverse,
 									...strategies.fiftyfifty,
 									...strategies.threefiftyeighty,
 									...strategies.maxfortytenr,
+									...strategies.maxeight,
 								];
 								return strategyArray.includes(option);
 							}}
@@ -515,9 +586,11 @@ export default function Strategies({ user, list }: Props) {
 									...strategies.fournhalf,
 									...strategies.fiftyeighty,
 									...strategies.avalancheorrocket,
+									...strategies.avalancheorrocketreverse,
 									...strategies.fiftyfifty,
 									...strategies.threefiftyeighty,
 									...strategies.maxforty,
+									...strategies.maxeight,
 								];
 								return strategyArray.includes(option);
 							}}
@@ -541,6 +614,61 @@ export default function Strategies({ user, list }: Props) {
 							onChange={(event, newValue) => {
 								updateFields({
 									maxfortytenr: newValue,
+								});
+							}}
+							renderInput={(params) => (
+								<TextField
+									{...params}
+									label="Assets"
+									placeholder="...or start typing"
+								/>
+							)}
+						/>
+						<label className="font-semibold text-lg">Max8</label>
+						<Autocomplete
+							multiple
+							id="checkboxes-tags-demo"
+							options={exchange
+								.map((symbol: string) => symbol)
+								.sort((a: string, b: string) => {
+									return a.toLowerCase().localeCompare(b.toLowerCase());
+								})}
+							value={strategies.maxeight || []}
+							disableCloseOnSelect
+							getOptionLabel={(option: string) => option}
+							getOptionDisabled={(option) => {
+								const strategyArray = [
+									...strategies.fournhalf,
+									...strategies.fiftyeighty,
+									...strategies.avalancheorrocket,
+									...strategies.avalancheorrocketreverse,
+									...strategies.fiftyfifty,
+									...strategies.threefiftyeighty,
+									...strategies.maxforty,
+									...strategies.maxfortytenr,
+								];
+								return strategyArray.includes(option);
+							}}
+							renderOption={(props, option, { selected }) => {
+								const isSelected = strategies.maxeight
+									? strategies.maxeight.some((skill: any) => skill === option)
+									: selected;
+
+								return (
+									<li {...props}>
+										<Checkbox
+											icon={icon}
+											checkedIcon={checkedIcon}
+											style={{ marginRight: 8 }}
+											checked={isSelected}
+										/>
+										{option}
+									</li>
+								);
+							}}
+							onChange={(event, newValue) => {
+								updateFields({
+									maxeight: newValue,
 								});
 							}}
 							renderInput={(params) => (
