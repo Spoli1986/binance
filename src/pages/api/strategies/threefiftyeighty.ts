@@ -101,6 +101,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 			console.log(userId + ":::: ", event);
 			if (event.eventType === "ORDER_TRADE_UPDATE") {
 				const position = await getPosition(event.order.symbol);
+
 				const balance = await getBalance(event.order.commissionAsset);
 				const openOrders: void | OrderResult[] = await getOpenOrders(
 					event.order.symbol,
@@ -135,9 +136,11 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 					? (entryMargin * -0.8) / Number(position.positionAmt) + entryPrice
 					: 0;
 
-				const orderQuantity: number = Number(
-					(Number(position.positionAmt) * posDirection).toFixed(precisions[1]),
-				);
+				const orderQuantity: number = position
+					? Number(
+							(Number(position.positionAmt) * posDirection).toFixed(precisions[1]),
+					  )
+					: 0;
 
 				if (
 					event.order.orderStatus === "FILLED" &&
@@ -186,26 +189,24 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 							symbol: event.order.symbol,
 							side: takeProfitSide,
 							type: "TAKE_PROFIT",
-							quantity: Number(
-								(Number(position.positionAmt) * 0.25).toFixed(precisions[1]),
-							),
+							quantity: Number((orderQuantity * 0.25).toFixed(precisions[1])),
 							stopPrice: Number(takeProfitPrice25Perc.toFixed(precisions[0])),
-							closePosition: "true",
+							price: Number(takeProfitPrice25Perc.toFixed(precisions[0])),
 							priceProtect: "TRUE",
 							timeInForce: "GTC",
+							reduceOnly: "true",
 						});
 
 						await client.submitNewOrder({
 							symbol: event.order.symbol,
 							side: takeProfitSide,
 							type: "TAKE_PROFIT",
-							quantity: Number(
-								(Number(position.positionAmt) * 0.375).toFixed(precisions[1]),
-							),
+							quantity: Number((orderQuantity * 0.375).toFixed(precisions[1])),
 							stopPrice: Number(takeProfitPrice50Perc.toFixed(precisions[0])),
-							closePosition: "true",
+							price: Number(takeProfitPrice50Perc.toFixed(precisions[0])),
 							priceProtect: "TRUE",
 							timeInForce: "GTC",
+							reduceOnly: "true",
 						});
 					}
 				} else if (
