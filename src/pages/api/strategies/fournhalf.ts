@@ -125,7 +125,9 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 						: -1
 					: 0;
 
-				const entryMargin = position ? Number(position.isolatedWallet) : 0;
+				const entryMargin = position
+					? (Number(position.notional) / Number(position.leverage)) * posDirection
+					: 0;
 
 				const takeProfitSide: OrderSide =
 					event.order.orderSide === "SELL" ? "BUY" : "SELL";

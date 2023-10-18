@@ -114,14 +114,22 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 				const entryPrice: number = position ? Number(position.entryPrice) : 0;
 
 				const liquidationPrice = position ? Number(position.liquidationPrice) : 0;
+
+				const posDirection = position
+					? Number(position.positionAmt) > 0
+						? 1
+						: -1
+					: 0;
+
 				const posAmount = position
 					? Number(position.positionAmt) > 0
 						? Number(position.positionAmt)
 						: -1 * Number(position.positionAmt)
 					: 0;
 				const entryMargin = position
-					? Number(position.isolatedWallet) > 11
-						? Number(position.isolatedWallet)
+					? (Number(position.notional) / Number(position.leverage)) * posDirection >
+					  11
+						? (Number(position.notional) / Number(position.leverage)) * posDirection
 						: 11
 					: 0;
 				const takeProfitSide: OrderSide =
