@@ -190,7 +190,7 @@ export default function Positions() {
 														>
 															<td className="py-2 pl-4">{order.side}</td>
 															<td className="py-2 pl-4">
-																{order.origType === "TAKE_PROFIT_MARKET"
+																{order.origType === "TAKE_PROFIT"
 																	? "TAKE PROFIT"
 																	: "LIMIT ORDER"}
 															</td>

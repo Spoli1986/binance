@@ -13,6 +13,12 @@ import {
 import { getSession } from "next-auth/react";
 import axios from "axios";
 
+type Body = {
+	userId: string;
+	event: WsUserDataEvents;
+	symbol: string;
+};
+
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
 	const catcher = (error: Error) => res.status(400).json({ error });
 
@@ -20,7 +26,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 
 	const handleCase: ResponseFuncs = {
 		POST: async (req: NextApiRequest, res: NextApiResponse) => {
-			const { userId, event, symbol } = req.body;
+			const { userId, event, symbol }: Body = req.body;
 
 			const API_KEY = process.env[`NEXT_PUBLIC_BINANCE_KEY_${userId}`];
 			const API_SECRET = process.env[`NEXT_PUBLIC_BINANCE_SECRET_${userId}`];
@@ -101,7 +107,6 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 			console.log(userId + ":::: ", event);
 			if (event.eventType === "ORDER_TRADE_UPDATE") {
 				const position = await getPosition(event.order.symbol);
-				const balance = await getBalance(event.order.commissionAsset);
 				const openOrders: void | OrderResult[] = await getOpenOrders(
 					event.order.symbol,
 				);
@@ -124,36 +129,28 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 					event.order.orderSide === "SELL" ? "BUY" : "SELL";
 
 				const takeProfitPrice: number = position
-					? (entryMargin * 0.5) / Number(position.positionAmt) + entryPrice
+					? (entryMargin * 0.33) / Number(position.positionAmt) + entryPrice
 					: 0;
 
-				const orderPrice: number = position
-					? (entryMargin * -0.8) / Number(position.positionAmt) + entryPrice
+				const stopLossPrice: number = position
+					? (entryMargin * -0.5) / Number(position.positionAmt) + entryPrice
 					: 0;
 
 				if (
 					event.order.orderStatus === "FILLED" &&
 					!event.order.isReduceOnly &&
-					event.order.originalOrderType !== "TAKE_PROFIT"
+					event.order.originalOrderType !== "STOP_MARKET"
 				) {
+					console.log(
+						"stop loss: ",
+						stopLossPrice,
+						";",
+						"take profit: ",
+						takeProfitPrice,
+					);
 					if (event.order.executionType === "TRADE") {
-						await client.submitNewOrder({
-							symbol: event.order.symbol,
-							side: event.order.orderSide,
-							type: "LIMIT",
-							quantity: Number(
-								(Number(position.positionAmt) * posDirection).toFixed(precisions[1]),
-							),
-							price: Number(orderPrice.toFixed(precisions[0])),
-							timeInForce: "GTC",
-						});
-
 						if (openOrders && !!openOrders.length) {
-							const tpOrders: OrderResult[] = openOrders.filter(
-								(order: OrderResult) => order.origType === "TAKE_PROFIT",
-							);
-
-							tpOrders.map(async (order: OrderResult) => {
+							openOrders.map(async (order: OrderResult) => {
 								await client
 									.cancelOrder({
 										symbol: event.order.symbol,
@@ -163,20 +160,29 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 									.catch((error) => console.log(error));
 							});
 						}
+
 						await client.submitNewOrder({
 							symbol: event.order.symbol,
 							side: takeProfitSide,
-							type: "TAKE_PROFIT",
+							type: "STOP_MARKET",
+							quantity: Number(
+								(Number(position.positionAmt) * posDirection).toFixed(precisions[1]),
+							),
+							stopPrice: Number(stopLossPrice.toFixed(precisions[0])),
+							timeInForce: "GTC",
+						});
+
+						await client.submitNewOrder({
+							symbol: event.order.symbol,
+							side: takeProfitSide,
+							type: "TAKE_PROFIT_MARKET",
 							stopPrice: Number(takeProfitPrice.toFixed(precisions[0])),
 							closePosition: "true",
 							priceProtect: "TRUE",
 							timeInForce: "GTC",
 						});
 					}
-				} else if (
-					event.order.orderStatus === "FILLED" &&
-					event.order.isReduceOnly
-				) {
+				} else if (event.order.orderStatus === "FILLED") {
 					if (openOrders && !!openOrders.length) {
 						openOrders.map(async (order: OrderResult) => {
 							await client
@@ -188,10 +194,25 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 								.catch((error) => console.log(error));
 						});
 					}
+					if (event.order.originalOrderType === "TAKE_PROFIT_MARKET") {
+						await client.submitNewOrder({
+							symbol: event.order.symbol,
+							side: takeProfitSide,
+							type: "MARKET",
+							quantity: Number(event.order.originalQuantity),
+						});
+					} else if (event.order.originalOrderType === "STOP_MARKET") {
+						await client.submitNewOrder({
+							symbol: event.order.symbol,
+							side: event.order.orderSide,
+							type: "MARKET",
+							quantity: Number(event.order.originalQuantity),
+						});
+					}
 				}
 			}
 
-			console.log("50/80 for " + userId);
+			console.log("TurboReverse " + userId);
 
 			res.end();
 		},

@@ -170,7 +170,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 						await client.submitNewOrder({
 							symbol: event.order.symbol,
 							side: takeProfitSide,
-							type: "TAKE_PROFIT_MARKET",
+							type: "TAKE_PROFIT",
 							stopPrice: Number(takeProfitPrice.toFixed(precisions[0])),
 							closePosition: "true",
 							priceProtect: "TRUE",

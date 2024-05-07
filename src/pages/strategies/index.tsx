@@ -16,7 +16,7 @@ import {
 	TextField,
 	Typography,
 } from "@mui/material";
-import { TUser, Strategies, TAError } from "../../../utils/types";
+import { TUser, iStrategies, TAError } from "../../../utils/types";
 import Loading from "../../../components/Loading";
 import CustomizedAccordions from "../../../components/Accordion";
 
@@ -25,18 +25,18 @@ const checkedIcon = <CheckBoxIcon fontSize="small" />;
 type Props = { user: TUser; list: string[] };
 type TResponse = {
 	message: string;
-	strategies: Strategies;
+	strategies: iStrategies;
 };
 
 export default function Strategies({ user, list }: Props) {
 	const [exchange, setExchange] = useState<string[]>(list);
-	const [strategies, setStrategies] = useState<Strategies>(user.strategies);
+	const [strategies, setStrategies] = useState<iStrategies>(user.strategies);
 	const [open, setOpen] = useState<boolean>(false);
 	const [loading, setLoading] = useState<boolean>(false);
 	const [response, setResponse] = useState<TResponse>();
 	const [error, setError] = useState<TAError>();
 
-	function updateFields(fields: Strategies) {
+	function updateFields(fields: iStrategies) {
 		setStrategies((prev: any) => {
 			return { ...prev, ...fields };
 		});
@@ -669,6 +669,61 @@ export default function Strategies({ user, list }: Props) {
 							onChange={(event, newValue) => {
 								updateFields({
 									maxeight: newValue,
+								});
+							}}
+							renderInput={(params) => (
+								<TextField
+									{...params}
+									label="Assets"
+									placeholder="...or start typing"
+								/>
+							)}
+						/>
+						<label className="font-semibold text-lg">Turboreverse</label>
+						<Autocomplete
+							multiple
+							id="checkboxes-tags-demo"
+							options={exchange
+								.map((symbol: string) => symbol)
+								.sort((a: string, b: string) => {
+									return a.toLowerCase().localeCompare(b.toLowerCase());
+								})}
+							value={strategies.turboreverse || []}
+							disableCloseOnSelect
+							getOptionLabel={(option: string) => option}
+							getOptionDisabled={(option) => {
+								const strategyArray = [
+									...strategies.fournhalf,
+									...strategies.fiftyeighty,
+									...strategies.avalancheorrocket,
+									...strategies.avalancheorrocketreverse,
+									...strategies.fiftyfifty,
+									...strategies.threefiftyeighty,
+									...strategies.maxforty,
+									...strategies.maxfortytenr,
+								];
+								return strategyArray.includes(option);
+							}}
+							renderOption={(props, option, { selected }) => {
+								const isSelected = strategies.turboreverse
+									? strategies.turboreverse.some((skill: any) => skill === option)
+									: selected;
+
+								return (
+									<li {...props}>
+										<Checkbox
+											icon={icon}
+											checkedIcon={checkedIcon}
+											style={{ marginRight: 8 }}
+											checked={isSelected}
+										/>
+										{option}
+									</li>
+								);
+							}}
+							onChange={(event, newValue) => {
+								updateFields({
+									turboreverse: newValue,
 								});
 							}}
 							renderInput={(params) => (

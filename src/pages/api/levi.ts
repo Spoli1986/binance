@@ -210,9 +210,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 									}
 									if (openOrders && !!openOrders.length) {
 										const takeProfitOrders: OrderResult[] = openOrders.filter(
-											(order: OrderResult) =>
-												order.origType === "TAKE_PROFIT_MARKET" ||
-												order.origType === "TAKE_PROFIT",
+											(order: OrderResult) => order.origType === "TAKE_PROFIT",
 										);
 										takeProfitOrders.map(async (order) => {
 											await client
@@ -227,7 +225,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 									await client.submitNewOrder({
 										symbol: event.order.symbol,
 										side: takeProfitSide,
-										type: "TAKE_PROFIT_MARKET",
+										type: "TAKE_PROFIT",
 										stopPrice: Number(takeProfitPrice.toFixed(precisions[0])),
 										closePosition: "true",
 										priceProtect: "TRUE",

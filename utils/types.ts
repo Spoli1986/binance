@@ -5,7 +5,7 @@ export interface ResponseFuncs {
 	DELETE?: Function;
 }
 
-export interface Strategies {
+export interface iStrategies {
 	[key: string]: string[]; // This index signature allows any string key to be used to access string values
 }
 
@@ -14,7 +14,7 @@ export type TUser = {
 	email: string;
 	password: string;
 	confirmed: boolean;
-	strategies: Strategies;
+	strategies: iStrategies;
 	wsKey: string;
 	role: string;
 };
