@@ -46,6 +46,15 @@ export default function Starter({}: Props) {
 				console.log(error);
 			}
 		};
+		const startWebSocketKAttila = async () => {
+			try {
+				await axios.post("/api/openconnection", {
+					userId: "64e5f408f536ed080e34d9b1",
+				});
+			} catch (error) {
+				console.log(error);
+			}
+		};
 
 		return (
 			<div className="h-[90vh] w-full border bg-blue-400 flex flex-col items-center">
@@ -73,6 +82,12 @@ export default function Starter({}: Props) {
 						className="text-3xl text-green-500 py-2 px-4 border border-green-500 rounded-md hover:bg-green-500 hover:text-white font-bold my-10 transition-colors duration-200"
 					>
 						Start K Peti
+					</button>
+					<button
+						onClick={startWebSocketKAttila}
+						className="text-3xl text-green-500 py-2 px-4 border border-green-500 rounded-md hover:bg-green-500 hover:text-white font-bold my-10 transition-colors duration-200"
+					>
+						Start Attila
 					</button>
 				</div>
 			</div>
