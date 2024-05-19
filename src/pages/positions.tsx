@@ -197,7 +197,7 @@ export default function Positions() {
 															<td className="py-2 pl-4">{order.symbol}</td>
 															<td className="py-2 pl-4">
 																{order.origType === "LIMIT"
-																	? (Number(order.origQty) * Number(order.price)).toFixed(2)
+																	? (Number(order.origQty) * Number(order.price)).toFixed(4)
 																	: "CLOSE POSITION"}
 															</td>
 															<td className="py-2 pl-4">
@@ -258,24 +258,24 @@ export default function Positions() {
 															</td>
 															<td className="py-2 pl-4">{pos.leverage}</td>
 															<td className="py-2 pl-4">
-																${Number(pos.entryPrice).toFixed(3)}
+																${Number(pos.entryPrice).toFixed(5)}
 															</td>
 															<td className="py-2 pl-4">
-																${Number(pos.liquidationPrice).toFixed(3)}
+																${Number(pos.liquidationPrice).toFixed(5)}
 															</td>
 															<td className="py-2 pl-4">{pos.marginType}</td>
 															<td className="py-2 pl-4">
 																${Number(pos.markPrice).toFixed(3)}
 															</td>
 															<td className="py-2 pl-4">
-																${Number(pos.isolatedWallet).toFixed(3)}
+																${Number(pos.isolatedWallet).toFixed(5)}
 															</td>
 															<td className="py-2 pl-4">
-																${Number(pos.unRealizedProfit).toFixed(3)} /{" "}
+																${Number(pos.unRealizedProfit).toFixed(5)} /{" "}
 																{(
 																	(Number(pos.unRealizedProfit) / Number(pos.isolatedWallet)) *
 																	100
-																).toFixed(3)}
+																).toFixed(5)}
 																%
 															</td>
 														</tr>
@@ -296,7 +296,7 @@ export default function Positions() {
 												<td></td>
 												<td className="py-2 pl-4">${accMargin.toFixed(2)}</td>
 												<td className="py-2 pl-4">
-													${unrealizedPnL.toFixed(2)} /{" "}
+													${unrealizedPnL.toFixed(4)} /{" "}
 													{((unrealizedPnL / accMargin) * 100).toFixed(2)}%
 												</td>
 											</tr>

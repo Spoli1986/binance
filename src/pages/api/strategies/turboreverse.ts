@@ -129,17 +129,17 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 					event.order.orderSide === "SELL" ? "BUY" : "SELL";
 
 				const takeProfitPrice: number = position
-					? (entryMargin * 0.33) / Number(position.positionAmt) + entryPrice
+					? (entryMargin * 0.035) / Number(position.positionAmt) + entryPrice
 					: 0;
 
 				const stopLossPrice: number = position
-					? (entryMargin * -0.5) / Number(position.positionAmt) + entryPrice
+					? (entryMargin * -0.023) / Number(position.positionAmt) + entryPrice
 					: 0;
 
 				if (
 					event.order.orderStatus === "FILLED" &&
 					!event.order.isReduceOnly &&
-					event.order.originalOrderType !== "STOP_MARKET"
+					event.order.originalOrderType !== "STOP"
 				) {
 					console.log(
 						"stop loss: ",
@@ -164,10 +164,11 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 						await client.submitNewOrder({
 							symbol: event.order.symbol,
 							side: takeProfitSide,
-							type: "STOP_MARKET",
+							type: "STOP",
 							quantity: Number(
 								(Number(position.positionAmt) * posDirection).toFixed(precisions[1]),
 							),
+							price: Number(stopLossPrice.toFixed(precisions[0])),
 							stopPrice: Number(stopLossPrice.toFixed(precisions[0])),
 							timeInForce: "GTC",
 						});
@@ -175,9 +176,12 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 						await client.submitNewOrder({
 							symbol: event.order.symbol,
 							side: takeProfitSide,
-							type: "TAKE_PROFIT_MARKET",
+							type: "TAKE_PROFIT",
+							price: Number(takeProfitPrice.toFixed(precisions[0])),
+							quantity: Number(
+								(Number(position.positionAmt) * posDirection).toFixed(precisions[1]),
+							),
 							stopPrice: Number(takeProfitPrice.toFixed(precisions[0])),
-							closePosition: "true",
 							priceProtect: "TRUE",
 							timeInForce: "GTC",
 						});
@@ -194,14 +198,14 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 								.catch((error) => console.log(error));
 						});
 					}
-					if (event.order.originalOrderType === "TAKE_PROFIT_MARKET") {
+					if (event.order.originalOrderType === "TAKE_PROFIT") {
 						await client.submitNewOrder({
 							symbol: event.order.symbol,
 							side: takeProfitSide,
 							type: "MARKET",
 							quantity: Number(event.order.originalQuantity),
 						});
-					} else if (event.order.originalOrderType === "STOP_MARKET") {
+					} else if (event.order.originalOrderType === "STOP") {
 						await client.submitNewOrder({
 							symbol: event.order.symbol,
 							side: event.order.orderSide,

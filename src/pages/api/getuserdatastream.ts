@@ -13,6 +13,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 		POST: async (req: NextApiRequest, res: NextApiResponse) => {
 			const userId = req.body.userId;
 			const session = await getSession({ req });
+			let feeAmount: number = 0;
 			if (session) {
 				// const API_KEY = process.env[`NEXT_PUBLIC_BINANCE_KEY_ROLI`];
 				// const API_SECRET = process.env[`NEXT_PUBLIC_BINANCE_SECRET_ROLI`];
@@ -41,6 +42,39 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 					});
 					const allOrders = await client.getAllOpenOrders().then((res) => res);
 
+					const posAmt = await client
+						.getIncomeHistory({ limit: 1000, incomeType: "REALIZED_PNL" })
+						.then((res) => res.length);
+
+					const commission = await client
+						.getIncomeHistory({ limit: 1000, incomeType: "COMMISSION" })
+						.then((res) =>
+							res.reduce((total, obj) => {
+								const incomeNumber = parseFloat(obj.income);
+								if (!isNaN(incomeNumber)) {
+									return total + incomeNumber;
+								}
+								// If conversion fails, ignore that income value
+								return total;
+							}, 0),
+						);
+
+					const pnl = await client
+						.getIncomeHistory({
+							limit: 1000,
+							incomeType: "REALIZED_PNL",
+						})
+						.then((res) =>
+							res.reduce((total, obj) => {
+								const incomeNumber = parseFloat(obj.income);
+								if (!isNaN(incomeNumber)) {
+									return total + incomeNumber;
+								}
+								// If conversion fails, ignore that income value
+								return total;
+							}, 0),
+						);
+
 					const allAssetBalances = await client.getBalance().then((res) => {
 						return res;
 					});
@@ -51,9 +85,14 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 						return { myPositions, mySymbols };
 					});
 
-					return res
-						.status(200)
-						.json({ allAssetBalances, allOrders, takeProfitOrders });
+					return res.status(200).json({
+						allAssetBalances,
+						allOrders,
+						takeProfitOrders,
+						commission,
+						posAmt,
+						pnl,
+					});
 				} catch (error) {
 					return res.status(400).json(error);
 				}
