@@ -46,7 +46,7 @@ export default function Starter({}: Props) {
 				console.log(error);
 			}
 		};
-		const startWebSocketKAttila = async () => {
+		const startWebSocketAttila = async () => {
 			try {
 				await axios.post("/api/openconnection", {
 					userId: "64e5f408f536ed080e34d9b1",
@@ -84,7 +84,7 @@ export default function Starter({}: Props) {
 						Start K Peti
 					</button>
 					<button
-						onClick={startWebSocketKAttila}
+						onClick={startWebSocketAttila}
 						className="text-3xl text-green-500 py-2 px-4 border border-green-500 rounded-md hover:bg-green-500 hover:text-white font-bold my-10 transition-colors duration-200"
 					>
 						Start Attila
