@@ -17,7 +17,7 @@ jobs:
       script: |
        export NVM_DIR=~/.nvm
        source ~/.nvm/nvm.sh
-       rm -rf /var/www/spolarpeter.cc/html/binance
+       sudo rm -rf /var/www/spolarpeter.cc/html/binance
        # mkdir test
        cd /var/www/spolarpeter.cc/html/
        git clone git@github.com:spoli1986/binance
