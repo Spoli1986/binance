@@ -23,6 +23,9 @@ const userSchema = new Schema({
 	role: {
 		type: "string",
 	},
+	isOpenConnection: {
+		type: "boolean",
+	},
 });
 const User = mongoose.models.User || mongoose.model("User", userSchema);
 export default User;

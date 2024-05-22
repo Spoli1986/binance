@@ -17,9 +17,15 @@ export type TUser = {
 	strategies: iStrategies;
 	wsKey: string;
 	role: string;
+	isOpenConnection: boolean;
 };
 
 export type TAError = {
 	status: number;
 	message: string;
+};
+
+export type TStrategyDefs = {
+	_id: string;
+	strategies: string[];
 };

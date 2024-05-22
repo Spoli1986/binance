@@ -3,7 +3,6 @@ import { ResponseFuncs, TUser } from "../../../utils/types";
 import { WebsocketClient, WsUserDataEvents } from "binance";
 import User from "../../../model/User";
 import { connect } from "../../../utils/connection";
-import axios from "axios";
 
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
 	const method: keyof ResponseFuncs = req.method as keyof ResponseFuncs;
@@ -12,7 +11,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 		POST: async (req: NextApiRequest, res: NextApiResponse) => {
 			await connect();
 			const userId = req.body.userId;
-
+			const user = await User.findOne({ _id: userId });
 			const API_KEY = process.env[`NEXT_PUBLIC_BINANCE_KEY_${userId}`];
 			const API_SECRET = process.env[`NEXT_PUBLIC_BINANCE_SECRET_${userId}`];
 
@@ -23,13 +22,14 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 					beautify: true,
 				});
 
-				wsBinance.closeWs(wsBinance);
+				wsBinance.tryWsPing(user.wsKey);
 				wsBinance.on("close", async (event) => {
 					try {
 						const saveWsKey = await User.findOneAndUpdate(
 							{ _id: userId },
 							{
 								wsKey: "",
+								isOpenConnection: false,
 							},
 							{ new: true },
 						);

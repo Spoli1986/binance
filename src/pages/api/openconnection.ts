@@ -11,73 +11,78 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 	const handleCase: ResponseFuncs = {
 		POST: async (req: NextApiRequest, res: NextApiResponse) => {
 			await connect();
-			const userId = req.body.userId;
-			console.log(userId);
-			const API_KEY = process.env[`NEXT_PUBLIC_BINANCE_KEY_${userId}`];
-			const API_SECRET = process.env[`NEXT_PUBLIC_BINANCE_SECRET_${userId}`];
-			console.log(API_KEY, API_SECRET);
-			try {
-				const wsBinance = new WebsocketClient({
-					api_key: API_KEY,
-					api_secret: API_SECRET,
-					beautify: true,
-				});
+			const user: TUser = req.body.user;
+			const API_KEY = process.env[`NEXT_PUBLIC_BINANCE_KEY_${user._id}`];
+			const API_SECRET = process.env[`NEXT_PUBLIC_BINANCE_SECRET_${user._id}`];
 
-				wsBinance.subscribeUsdFuturesUserDataStream(false, true);
-				wsBinance.on("open", async (event) => {
-					try {
-						const saveWsKey = await User.findOneAndUpdate(
-							{ _id: userId },
-							{
-								wsKey: event.wsKey,
-							},
-							{ new: true },
-						);
-					} catch (error) {
-						console.log(error);
-						return res.status(401).json({ error });
-					}
-				});
+			const wsBinance = new WebsocketClient({
+				api_key: API_KEY,
+				api_secret: API_SECRET,
+				beautify: true,
+			});
 
-				wsBinance.on(
-					"formattedUserDataMessage",
-					async (event: WsUserDataEvents) => {
-						if (event.eventType === "ORDER_TRADE_UPDATE") {
-							const userWsKey = event.wsKey;
-
-							try {
-								const user: TUser | null = await User.findOne({ wsKey: userWsKey });
-								const symbol: string = event.order.symbol;
-								const findKeyByValue = (obj: any, value: string) => {
-									return Object.keys(obj).find((key) => obj[key].includes(value));
-								};
-								const strategy = findKeyByValue(user?.strategies, symbol);
-								const body = {
-									symbol,
-									event,
-									userId,
-								};
-								if (strategy) {
-									const response = await axios.post(
-										"http://localhost:3000/api/strategies/" + strategy,
-										body,
-									);
-								} else
-									return res.status(204).json({
-										message: "This asset has not been assigned to any strategy yet!",
-									});
-							} catch (error) {
-								console.log(error);
-								return "No user found";
-							}
+			if (user.isOpenConnection) {
+				wsBinance.tryWsPing(user.wsKey);
+				return res.status(200).json("Ping");
+			} else {
+				try {
+					wsBinance.subscribeUsdFuturesUserDataStream(false, true);
+					wsBinance.on("open", async (event) => {
+						try {
+							const saveWsKey = await User.findOneAndUpdate(
+								{ _id: user._id },
+								{
+									wsKey: event.wsKey,
+									isOpenConnection: true,
+								},
+								{ new: true },
+							);
+						} catch (error) {
+							console.log(error);
+							return res.status(401).json({ error });
 						}
-					},
-				);
-			} catch (error) {
-				console.log(error);
-				return res.status(401).json({ error });
+					});
+					wsBinance.on(
+						"formattedUserDataMessage",
+						async (event: WsUserDataEvents) => {
+							console.log(event);
+							if (event.eventType === "ORDER_TRADE_UPDATE") {
+								const userWsKey = event.wsKey;
+
+								try {
+									const user: TUser | null = await User.findOne({ wsKey: userWsKey });
+									const symbol: string = event.order.symbol;
+									const findKeyByValue = (obj: any, value: string) => {
+										return Object.keys(obj).find((key) => obj[key].includes(value));
+									};
+									const strategy = findKeyByValue(user?.strategies, symbol);
+									const body = {
+										symbol,
+										event,
+										userId: user?._id,
+									};
+									if (strategy) {
+										const response = await axios.post(
+											"http://localhost:3000/api/strategies/" + strategy,
+											body,
+										);
+									} else
+										return res.status(204).json({
+											message: "This asset has not been assigned to any strategy yet!",
+										});
+								} catch (error) {
+									console.log(error);
+									return "No user found";
+								}
+							}
+						},
+					);
+				} catch (error) {
+					console.log(error);
+					return res.status(401).json({ error });
+				}
+				return res.status(200).json("Connection established");
 			}
-			return res.status(200).json("Connection established");
 		},
 	};
 

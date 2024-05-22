@@ -129,11 +129,11 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 					event.order.orderSide === "SELL" ? "BUY" : "SELL";
 
 				const takeProfitPrice: number = position
-					? (entryMargin * 0.35) / Number(position.positionAmt) + entryPrice
+					? (entryMargin * 0.033) / Number(position.positionAmt) + entryPrice
 					: 0;
 
 				const stopLossPrice: number = position
-					? (entryMargin * -0.23) / Number(position.positionAmt) + entryPrice
+					? (entryMargin * -0.023) / Number(position.positionAmt) + entryPrice
 					: 0;
 
 				if (
