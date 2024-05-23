@@ -42,38 +42,47 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 					});
 					const allOrders = await client.getAllOpenOrders().then((res) => res);
 
-					const posAmt = await client
-						.getIncomeHistory({ limit: 1000, incomeType: "REALIZED_PNL" })
-						.then((res) => res.length);
+					// const posAmt = await client
+					// 	.getIncomeHistory({
+					// 		limit: 1000,
+					// 		startTime: 1716366716,
+					// 		incomeType: "REALIZED_PNL",
+					// 	})
+					// 	.then((res) => res.length);
 
-					const commission = await client
-						.getIncomeHistory({ limit: 1000, incomeType: "COMMISSION" })
-						.then((res) =>
-							res.reduce((total, obj) => {
-								const incomeNumber = parseFloat(obj.income);
-								if (!isNaN(incomeNumber)) {
-									return total + incomeNumber;
-								}
-								// If conversion fails, ignore that income value
-								return total;
-							}, 0),
-						);
+					// const commission = await client
+					// 	.getIncomeHistory({
+					// 		limit: 1000,
+					// 		incomeType: "COMMISSION",
+					// 		startTime: 1716366716,
+					// 	})
+					// 	.then((res) =>
+					// 		res.reduce((total, obj) => {
+					// 			const incomeNumber = parseFloat(obj.income);
+					// 			if (!isNaN(incomeNumber)) {
+					// 				return total + incomeNumber;
+					// 			}
+					// 			// If conversion fails, ignore that income value
+					// 			return total;
+					// 		}, 0),
+					// 	);
 
-					const pnl = await client
-						.getIncomeHistory({
-							limit: 1000,
-							incomeType: "REALIZED_PNL",
-						})
-						.then((res) =>
-							res.reduce((total, obj) => {
-								const incomeNumber = parseFloat(obj.income);
-								if (!isNaN(incomeNumber)) {
-									return total + incomeNumber;
-								}
-								// If conversion fails, ignore that income value
-								return total;
-							}, 0),
-						);
+					// const pnl = await client
+					// 	.getIncomeHistory({
+					// 		startTime: 1716366716,
+					// 		limit: 1000,
+					// 		incomeType: "REALIZED_PNL",
+					// 	})
+					// 	.then((res) =>
+					// 		res.reduce((total, obj) => {
+					// 			const incomeNumber = parseFloat(obj.income);
+					// 			if (!isNaN(incomeNumber)) {
+					// 				return total + incomeNumber;
+					// 			}
+					// 			// If conversion fails, ignore that income value
+					// 			return total;
+					// 		}, 0),
+					// 	);
 
 					const allAssetBalances = await client.getBalance().then((res) => {
 						return res;
@@ -89,9 +98,9 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 						allAssetBalances,
 						allOrders,
 						takeProfitOrders,
-						commission,
-						posAmt,
-						pnl,
+						// commission,
+						// posAmt,
+						// pnl,
 					});
 				} catch (error) {
 					return res.status(400).json(error);

@@ -138,8 +138,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 
 				if (
 					event.order.orderStatus === "FILLED" &&
-					!event.order.isReduceOnly &&
-					event.order.originalOrderType !== "STOP"
+					event.order.originalOrderType === "MARKET"
 				) {
 					console.log(
 						"stop loss: ",
