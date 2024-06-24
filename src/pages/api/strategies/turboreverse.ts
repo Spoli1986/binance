@@ -165,9 +165,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 							side: takeProfitSide,
 							type: "STOP",
 							quantity: Number(
-								(event.order.orderFilledAccumulatedQuantity * posDirection).toFixed(
-									precisions[1],
-								),
+								(Number(position.positionAmt) * posDirection).toFixed(precisions[1]),
 							),
 							price: Number(stopLossPrice.toFixed(precisions[0])),
 							stopPrice: Number(stopLossPrice.toFixed(precisions[0])),
