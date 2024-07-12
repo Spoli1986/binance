@@ -172,7 +172,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 							price: Number(takeProfitPrice.toFixed(precisions[0])),
 							quantity: Number(
 								(Number(position.positionAmt) * posDirection).toFixed(precisions[1]),
-								),
+							),
 							stopPrice: Number(takeProfitPrice.toFixed(precisions[0])),
 							priceProtect: "TRUE",
 							timeInForce: "GTC",
@@ -180,7 +180,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 					}
 				} else if (
 					event.order.orderStatus === "FILLED" &&
-					event.order.isReduceOnly
+					event.order.originalOrderType == "TAKE_PROFIT"
 				) {
 					if (openOrders && !!openOrders.length) {
 						openOrders.map(async (order: OrderResult) => {
