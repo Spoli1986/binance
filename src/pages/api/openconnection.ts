@@ -45,7 +45,6 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 					wsBinance.on(
 						"formattedUserDataMessage",
 						async (event: WsUserDataEvents) => {
-							console.log(event);
 							if (event.eventType === "ORDER_TRADE_UPDATE") {
 								const userWsKey = event.wsKey;
 
