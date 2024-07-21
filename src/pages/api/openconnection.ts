@@ -38,6 +38,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 						console.log(error);
 						return res.status(401).json({ error });
 					}
+					return res.status(200).json("Connection established");
 				});
 
 				wsBinance.on(
@@ -64,9 +65,9 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 										body,
 									);
 								} else
-									return res.status(204).json({
+									return {
 										message: "This asset has not been assigned to any strategy yet!",
-									});
+									};
 							} catch (error) {
 								console.log(error);
 								return "No user found";
@@ -74,8 +75,6 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 						}
 					},
 				);
-
-				return res.status(200).json("Connection established");
 			} catch (error) {
 				console.log(error);
 				return res.status(401).json({ error });
