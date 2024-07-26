@@ -121,7 +121,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 					event.order.orderSide === "SELL" ? "BUY" : "SELL";
 
 				const takeProfitPrice: number = position
-					? (entryMargin * 0.5) / Number(position.positionAmt) + entryPrice
+					? (entryMargin * 0.8) / Number(position.positionAmt) + entryPrice
 					: 0;
 
 				const orderPrice: number = position
@@ -191,7 +191,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 				}
 			}
 
-			console.log("50/50 for " + userId);
+			console.log("50/100 for " + userId);
 
 			res.end();
 		},
